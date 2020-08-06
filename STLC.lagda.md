@@ -3,7 +3,7 @@ Intrinsically-typed de Bruijn representation of simply typed lambda calculus
 ============================================================================
 
 ```agda
-{-# OPTIONS --allow-unsolved-metas #-} 
+{-# OPTIONS --allow-unsolved-metas #-}
 module STLC where
 
 open import Data.Nat
@@ -204,13 +204,13 @@ fst : ∅ ⊢ A →̇ B →̇ A
 fst = {!!}
 
 bool : Type → Type
-bool A = {!!}
+bool A = A →̇ A →̇ A
 
 if : ∅ ⊢ bool A →̇ A →̇ A →̇ A
-if = {!!} 
+if = {!!}
 
 succ : ∅ ⊢ nat A →̇ nat A
-succ = {!!} 
+succ = {!!}
 ```
 
 Parallel Substitution
@@ -309,7 +309,7 @@ _[_] N M =  N ⟪ subst-zero M ⟫
 
 ```agda
 _ : ∀ {A} → ∅ ⊢ nat A
-_ = e [ c₀ ]
+_ = {!!}
   where
     e : ∅ , B ⊢ B
     e = # 0
@@ -329,14 +329,14 @@ data _-→_ {Γ} : (M N : Γ ⊢ A) → Set where
     : (ƛ M) · N -→ M [ N ]
 
   ξ-ƛ
-    : M -→ M′
+    :   M -→ M′
     → ƛ M -→ ƛ M′    
   ξ-·ₗ
-    : L -→ L′
+    :     L -→ L′
       ---------------
     → L · M -→ L′ · M
   ξ-·ᵣ
-    : M -→ M′
+    :     M -→ M′
       ---------------
     → L · M -→ L · M′
 ```
@@ -397,29 +397,33 @@ Show that -↠ is a congruence. That is, show the following lemmas.
 ƛ-↠ : M -↠ M′
       -----------
     → ƛ M -↠ ƛ M′
-ƛ-↠ (M ∎)               = ƛ M ∎
-ƛ-↠ (L -→⟨ L-→M ⟩ M-↠N) = ƛ L -→⟨ ξ-ƛ L-→M ⟩ ƛ-↠ M-↠N
+ƛ-↠ M-↠M′       = {!!}
   
 ·-↠ : M -↠ M′
     → N -↠ N′
     → M · N -↠ M′ · N′
-·-↠ = ?
+·-↠ M-↠M′ N-↠N′ = {!!}
 ```
 
 Normal form
 -----------
 
-Recall that a term M is in normal form if M --̸→ N for any N.
+Recall that a term M is in normal form if M --̸→ N for any N.  This
+property can be characterised completely by its syntax. The
+characterisation is given as follows:
 
-A syntactical characterisation of being in normal form is
+    λ x₁ x₂ ⋯ xₙ. x N₁ N₂ ⋯ ⋯ ⋯ Nₘ  
+    │             ╰── Neutral ──╯│  
+    ╰───────── Normal ───────────╯  
 
-    λ x₀ x₁ ⋯ xₙ. x N₀ N₁ N₂ ⋯ Nₘ  
-    │             ╰── Neutral ─╯│  
-    ╰──────── Normal ───────────╯  
+where x is a (free or bound) variable, Nᵢ's are all in normal form,
+and n and m can be zero. The format is devided into the neutral part
+and the normal part where the neutral part indicates a spine of normal terms
+starting from a variable and the normal part is a sequence of
+abstractions λ followed by a neutral part.
 
-where x is a variable (which need not be bound at all) and Nᵢ's are
-all in normal form. This characterisation is defined as two inductive
-families mutually as follows.
+This characterisation is defined as two mutually-defiend inductive
+families.
 
 ```agda
 data Neutral : Γ ⊢ A → Set 
@@ -440,35 +444,16 @@ data Normal where
 The soundness of characterisation is proved by induction on the
 derivation of Normal M (resp. Neutral M) and if necessary on M -→ M.
 
-The completeness is trickier as we will need to analyse the induction
-hypothesis further.
+The Proof is left as an exercise for you.
 
-Proofs are left as an exercise for you.
-
-### Exercise.
+### Exercise
 
 ```agda
-normal-soundness  : Normal M  → ¬ (M -→ M′)
+normal-soundness  : Normal M  → ¬ (M -→ N)
 neutral-soundness : Neutral M → ¬ (M -→ M′)
 
-normal-completeness : (M : Γ ⊢ A)
-  → ((N : Γ ⊢ A) → ¬ (M -→ N))
-  → Normal M 
-
 neutral-soundness = {!!}
-
 normal-soundness  = {!!}
-
-normal-completeness (` x)   M↛N = {!!}
-normal-completeness (ƛ M)   M↛N = {!!}
-normal-completeness (L · M) M↛N with normal-completeness L ·ₗ-nf | normal-completeness M ·ᵣ-nf
-  where
-    ·ₗ-nf : ∀ N → ¬ (L -→ N)
-    ·ₗ-nf N L-→N = M↛N (N · M) (ξ-·ₗ L-→N)
-    ·ᵣ-nf : ∀ N → ¬ (M -→ N)
-    ·ᵣ-nf N M-→N = M↛N (L · N) (ξ-·ᵣ M-→N)
-... | ᵒ x            | M↓ = {!!}
-... | ƛ_ {M = L′} L↓ | M↓ = ⊥-elim {!!}
 ```
 
 Preservation
@@ -503,19 +488,30 @@ data Progress (M : Γ ⊢ A) : Set where
 ```
 
 Progress theorm is proved by induction on the derviation of Γ ⊢ M : A
-in the informal development so that foramlly it is merely an induction
-on M : Γ ⊢ A.
+in the informal and formal developments.
 
 ```agda
 progress : (M : Γ ⊢ A)
   → Progress M
-progress (` x)       = {!!}
-progress (ƛ M)       = {!!}
-progress (` x · N)   = {!!}
-progress ((ƛ M) · N) = {!!}
-progress (LM@(L · M) · N) with progress LM
-... | step LM→K    = step (ξ-·ₗ LM→K)
-... | done (ᵒ LM↓) with progress N
-...   | step N-→N′ = step (ξ-·ᵣ N-→N′)
-...   | done N↓    = done (ᵒ (LM↓ · N↓))
+progress M = {!!}
+```
+
+Completeness of the syntactical characterisation of Normal
+----------------------------------------------------------
+
+The completeness is proved by induction on the derivation of M
+(or Γ ⊢ M : A) and by contradiction (given by 
+
+   ⊥-elim : ∀ {A} → ⊥ → A 
+   ⊥-elim ()
+
+where () indicates no constructors are possible) so that we can deduce
+any property we need once we derive a contradication ⊥.
+
+```agda
+normal-completeness
+  : (M : Γ ⊢ A) → ((N : Γ ⊢ A) → ¬ (M -→ N))
+  → Normal M 
+
+normal-completeness M M↛N = {!!}
 ```
