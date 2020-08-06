@@ -397,17 +397,13 @@ Show that -↠ is a congruence. That is, show the following lemmas.
 ƛ-↠ : M -↠ M′
       -----------
     → ƛ M -↠ ƛ M′
-ƛ-↠ = {!!}
+ƛ-↠ (M ∎)               = ƛ M ∎
+ƛ-↠ (L -→⟨ L-→M ⟩ M-↠N) = ƛ L -→⟨ ξ-ƛ L-→M ⟩ ƛ-↠ M-↠N
   
-·ₗ-↠ : M -↠ M′
-       ---------------
-     → M · N -↠ M′ · N
-·ₗ-↠ = {!!}
-
-·ᵣ-↠ : N -↠ N′
-       ---------------
-     → M · N -↠ M · N′
-·ᵣ-↠ = {!!}
+·-↠ : M -↠ M′
+    → N -↠ N′
+    → M · N -↠ M′ · N′
+·-↠ = ?
 ```
 
 Normal form
