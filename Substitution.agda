@@ -6,44 +6,6 @@ open import Relation.Binary.PropositionalEquality as PropEq
 
 open import STLC hiding (_∎)
 
-------------------------------------------------------------------------------
--- Monad Laws for Parallel Substitution
--- 
--- T. Altenkirch and B. Reus, “Monadic Presentations of Lambda Terms Using Generalized Inductive Types,” in Computer Science Logic. CSL 1999, vol. 1683, J. Flum and M. Rodriguez-Artalejo, Eds. Springer, Berlin, Heidelberg, 1999, pp. 453–468. 
--- T. Altenkirch, J. Chapman, and T. Uustalu, “Monads need not be endofunctors,” LMCS, vol. 11, no. 1, pp. 1–40, 2015.
-
--- A relative monad on a functor J : 𝕁 → ℂ consits of
---   1. (monad)  a map on objects T : |𝕁| → |ℂ|
---   2. (return) for any X ∈ |𝕁| a map ηₓ : JX → TX 
---   3. (bind)   for any X, Y ∈ |𝕁| and f : JX → TY, a map f* : TX → TY called the Kleisli extension of f.
--- satisfying the usual monad laws.
-
--- _⊢_  is a relative monad formed by
---   1. 𝕁 = Obj : Context Type
---          Mor : (ρ : {A : Type} → Γ ∋ A → Δ ∋ A)
--- 
---      equivalently, 𝕁(Γ, Δ) = Rename Γ Δ
---
---   2. ℂ = [Type, Set] (in which Type is merely a discrete category) 
--- 
---                         f : 𝒫 ⇒ 𝒬
---                     ==========================
---                     f : {A : Type} → 𝒫 A → 𝒬 A
--- 
---   3. JΓ = Γ ∋_ : Type → Set 
---      Jρ = ρ : ∀ {A} → Γ ∋ A → Δ ∋ A
--- 
---   4. T: Context Type → [Type, Set]
---                    Γ ↦ Γ ⊢_
--- 
---   5. η = `_ : Γ ∋_ ⇒ Γ ⊢_
--- 
---   6. Given σ ∈ ℂ(JΓ, TΔ) = Subst Γ Δ, we have ⟪ σ ⟫ : Γ ⊢_ ⇒ Δ ⊢_ as the Kleisli extension, i.e.
--- 
---      σ : ∀ {A} → Γ ∋ A → Δ ⊢ A
---      -----------------------------
---      ⟪ σ ⟫ : ∀ {A} → Γ ⊢ A → Δ ⊢ A
-
 infixr 5 _⨟_
 
 _⨟_ : ∀{Γ Δ Σ} → Subst Γ Δ → Subst Δ Σ → Subst Γ Σ
@@ -131,7 +93,7 @@ rename-comp ρ₁ ρ₂ {M = ƛ M}      = cong ƛ_ (begin
 ----------------------------------------------------------------------
 -- punchIn: Weakening at any position
 
-punchIn : ∀ A {Γ₁} Γ₂ → Rename (Γ₁ ⧺ Γ₂) (Γ₁ , A ⧺ Γ₂)
+punchIn : ∀ A {Γ₁} Γ₂ → Rename (Γ₁ ⧺ Γ₂) ((Γ₁ , A) ⧺ Γ₂)
 punchIn _ ∅       Z     = S Z
 punchIn _ ∅       (S x) = S (S x)
 punchIn _ (Δ , C) Z     = Z
@@ -353,17 +315,15 @@ rename-reduce : {ρ : Rename Γ Δ}
   → rename ρ M -→ rename ρ N
 rename-reduce {ρ = ρ} (β-ƛ· {M = M} {N})
   rewrite PropEq.sym (rename-ssubst ρ M N) = β-ƛ· 
---rename-reduce (ξ-absurd M-→N) = ξ-absurd (rename-reduce M-→N)
-rename-reduce (ξ-ƛ M-→N)      = ξ-ƛ (rename-reduce  M-→N)
-rename-reduce (ξ-·ₗ M-→N)     = ξ-·ₗ (rename-reduce M-→N)
-rename-reduce (ξ-·ᵣ M-→N)     = ξ-·ᵣ (rename-reduce M-→N)
+rename-reduce (ξ-ƛ M-→N)  = ξ-ƛ  (rename-reduce M-→N)
+rename-reduce (ξ-·ₗ M-→N) = ξ-·ₗ (rename-reduce M-→N)
+rename-reduce (ξ-·ᵣ M-→N) = ξ-·ᵣ (rename-reduce M-→N)
 
 subst-reduce : {σ : Subst Γ Δ}
   → M -→ N
   → M ⟪ σ ⟫ -→ N ⟪ σ ⟫
 subst-reduce {σ = σ} (β-ƛ· {M = M} {N})
   rewrite PropEq.sym (subst-ssubst σ M N) = β-ƛ·
---subst-reduce (ξ-absurd M-→N) = ξ-absurd (subst-reduce M-→N)
 subst-reduce (ξ-ƛ M-→N)  = ξ-ƛ  (subst-reduce M-→N)
 subst-reduce (ξ-·ₗ M-→N) = ξ-·ₗ (subst-reduce M-→N)
 subst-reduce (ξ-·ᵣ M-→N) = ξ-·ᵣ (subst-reduce M-→N)

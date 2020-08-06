@@ -1,9 +1,9 @@
+{-# OPTIONS --allow-unsolved-metas #-} 
 module Normalisation where
 
 open import Data.Product as Prod
   renaming (_,_ to ⟨_,_⟩)
 open import Data.Sum
-open import Relation.Nullary
 
 open import STLC
 open import Substitution
@@ -137,3 +137,6 @@ nf-soundness (_-→⟨_⟩_ M {M′} p nfM′) with nf-soundness nfM′
 
 normalise : (M : Γ ⊢ A) → ∃[ N ] (Normal N × (M -↠ N))
 normalise M = nf-soundness (weak-normalisation M)
+
+------------------------------------------------------------------------------
+-- Strong normalisation
