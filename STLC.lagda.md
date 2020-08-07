@@ -9,11 +9,11 @@ module STLC where
 open import Data.Nat
 open import Data.Empty
 open import Relation.Nullary
-open import Context public
 ```
 
 Fixity declartion
 -----------------
+
 ```agda
 infix  3 _⊢_
 
@@ -28,27 +28,137 @@ infixr 9 ᵒ_ `_ #_
 Types
 -----
 
+We only deal with function types and a ground type ⋆.
+
 ```agda
 data Type : Set where
-  ⊤   : Type
+  ⋆   : Type
   _→̇_ : Type → Type → Type
+```
 
-Cxt  = Context Type
+Context
+-------
+
+```
+infixl 7 _⧺_
+infixl 6 _,_
+infix  4 _∋_
+
+data Context : Set where
+  ∅   :                  Context
+  _,_ : Context → Type → Context
 ```
 
 For convenience, we use symbols
 
   * `A`, `B`, `C` for types
   * `Γ`, `Δ`, and `Ξ` for contexts
-  * x for any proof of Γ ∋ A
 
-In Agda, this convention can be achieved by the keyword `variable` as follows.
+In Agda this convention can be achieved by the keyword `variable` as follows.
 
 ```agda
 variable
+  Γ Δ Ξ : Context
   A B C : Type
-  Γ Δ Ξ : Context Type
+```
+
+Membership
+----------
+
+`Γ ∋ A` means that A is a member of Γ.
+
+There are two ways of estabilishing the judgement Γ ∋ A.
+
+  1. `Γ , A ∋ A` for any `Γ` and `A`, as we know that `A` is in the
+  0-th position.
+
+  2. If `x : Γ ∋ A` is a proof that `A` is in `Γ`, then `Γ , B ∋ A`
+     holds.
+
+How should we name these inference rules? Note that if we interpret
+the proof of `Γ ∋ A` as the position of `A` in `Γ`, then 1. should be
+Z (for zero) and 2. should be S (for successor).
+
+```agda
+data _∋_ : Context → Type → Set where
+  Z   ---------
+    : Γ , A ∋ A
+
+  S_ : Γ     ∋ A
+       ---------
+     → Γ , B ∋ A
+
+variable
   x     : Γ ∋ A
+```
+
+For example, `S Z : ∅ , A , B ∋ A` means `A` is in the first position. That is, 
+
+```
+_ : ∅ , A , B ∋ A
+_ = S Z 
+```
+
+Lookup is just _‼_ in Haskell. Agda is a total language, but `lookup`
+can only be partial with this type. We work around this problem by
+postulating `⊥`, as we only use `lookup` for examples.
+
+```
+lookup : Context → ℕ → Type
+lookup (Γ , A) zero     =  A
+lookup (Γ , B) (suc n)  =  lookup Γ n
+lookup ∅       _        =  ⊥-elim impossible
+  where postulate impossible : ⊥
+```
+
+If `lookup Γ n` finds the element in the n-th position, then the
+memberhsip proof can be produced algorithmatically. Hence we can
+transform a natural number to a membership proof.
+
+```
+count : (n : ℕ) → Γ ∋ lookup Γ n
+count {Γ = Γ , _} zero     =  Z
+count {Γ = Γ , _} (suc n)  =  S (count n)
+count {Γ = ∅    }  _        =  ⊥-elim impossible
+  where postulate impossible : ⊥
+```
+
+### Examples 
+
+```
+_ :  ∅ , A , B ∋ A
+_ = count 1
+
+_ : ∅ , B , A ∋ A
+_ = count 0
+```
+
+Shifting
+--------
+ 
+     (Aₙ , ... , A₁, A₀) 
+       |    |     |   |
+       ↓    ↓     ↓   ↓  
+   ↦ (Aₙ , ... , A₁, A₀, B)
+  
+      n+1         2   1  0
+
+```
+ext
+  : (∀ {A}   →     Γ ∋ A →     Δ ∋ A)
+    ---------------------------------
+  → (∀ {A B} → Γ , B ∋ A → Δ , B ∋ A)
+ext ρ Z      =  Z
+ext ρ (S x)  =  S (ρ x)
+```
+
+Concatenation
+-------------
+
+```
+_⧺_ : Context → Context → Context
+Γ ⧺ ∅       = Γ
+Γ ⧺ (Δ , x) = Γ ⧺ Δ , x
 ```
 
 Terms = typing rules
@@ -64,7 +174,7 @@ terms in simply typed lambda calculus is defined as an inducitve family
 indexed by a (given) context and a type. 
 
 ```agda
-data _⊢_ (Γ : Cxt) : Type → Set where
+data _⊢_ (Γ : Context) : Type → Set where
 ```
 
 In our formal development we will use the position of λ to which the
@@ -220,10 +330,10 @@ To define substitution, it is actually easier to define substitution
 for all free variable at once instead of one.
 
 ```agda
-Rename : Cxt → Cxt → Set
+Rename : Context → Context → Set
 Rename Γ Δ = ∀ {A} → Γ ∋ A → Δ ∋ A
 
-Subst : Context Type → Context Type → Set
+Subst : Context → Context → Set
 Subst Γ Δ = ∀ {A} → Γ ∋ A → Δ ⊢ A
 ```
 
@@ -360,8 +470,9 @@ data _-↠_ {Γ A} : (M N : Γ ⊢ A) → Set where
       -------
     → L -↠ N
 
-infix  2 _-↠_ _∎
+infix  2 _-↠_ 
 infixr 2 _-→⟨_⟩_
+infix 3 _∎
 ```
 
 Viewing -↠ as a relation (a binary predicate), we can see that -↠ is
@@ -454,8 +565,6 @@ can deduce any property we need once we derive a contradication ⊥.
 
 Proofs are left as exercises. 
 
-```agda
-```
 ### Exercise
 
 ```agda

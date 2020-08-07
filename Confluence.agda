@@ -14,12 +14,7 @@ infix 3 _⇛_
 data _⇛_  {Γ} : (M N : Γ ⊢ A) → Set where
   pvar : {x : Γ ∋ A}
        → `  x ⇛ ` x
-{-
-  pabsurd
-    : M ⇛ M′
-      ------------------------
-    → absurd A M ⇛ absurd A M′
--}
+       
   pabs
     : M ⇛ M′
       -----------
@@ -42,7 +37,7 @@ data _⇛_  {Γ} : (M N : Γ ⊢ A) → Set where
 
 infix  2 _⇛*_
 infixr 2 _⇛⟨_⟩_
-infix  3 _∎
+--infix  3 _∎
 
 data _⇛*_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
   _∎ : (M : Γ ⊢ A)
@@ -81,21 +76,16 @@ par-refl {M = _ · _}      = papp par-refl par-refl
 
 ⇛⊆-↠ : M ⇛ N → M -↠ N
 ⇛⊆-↠ pvar  = _ ∎ 
---⇛⊆-↠ (pabsurd M⇛M′) = absurd-↠ (⇛⊆-↠ M⇛M′)
 ⇛⊆-↠ (pbeta {M = M} {M′} {N} {N′} M⇛M′ N⇛N′) =
   (ƛ M) · N
-    -↠⟨ ·ₗ-↠ (ƛ-↠ (⇛⊆-↠ M⇛M′)) ⟩
-  (ƛ M′) · N
-    -↠⟨ ·ᵣ-↠ (⇛⊆-↠ N⇛N′) ⟩
+    -↠⟨ ·-↠ (ƛ-↠ (⇛⊆-↠ M⇛M′)) (⇛⊆-↠ N⇛N′) ⟩
   (ƛ M′) · N′
     -→⟨ β-ƛ· ⟩
   M′ [ N′ ] ∎
 ⇛⊆-↠ (pabs M⇛N) = ƛ-↠ (⇛⊆-↠ M⇛N)
 ⇛⊆-↠ (papp L⇛M M⇛N) =
   _ · _
-    -↠⟨ ·ₗ-↠ (⇛⊆-↠ L⇛M) ⟩
-  _ · _
-    -↠⟨ ·ᵣ-↠ (⇛⊆-↠ M⇛N) ⟩
+    -↠⟨ ·-↠ (⇛⊆-↠ L⇛M) (⇛⊆-↠ M⇛N) ⟩
   _ · _
     ∎
 
@@ -111,7 +101,6 @@ par-rename
   → M ⇛ M′
   → rename ρ M ⇛ rename ρ M′
 par-rename pvar              = pvar
---par-rename (pabsurd M⇛M′)    = pabsurd (par-rename M⇛M′)
 par-rename (pabs M⇛M′)       = pabs (par-rename M⇛M′)
 par-rename (papp M⇛M′ N⇛N′)  = papp (par-rename M⇛M′) (par-rename N⇛N′)
 par-rename {Γ} {Δ} {ρ = ρ} (pbeta {M′ = M′} {N′ = N′} M⇛M′ N⇛N′)
