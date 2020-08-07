@@ -414,16 +414,20 @@ characterisation is given as follows:
 
     λ x₁ x₂ ⋯ xₙ. x N₁ N₂ ⋯ ⋯ ⋯ Nₘ  
     │             ╰── Neutral ──╯│  
-    ╰───────── Normal ───────────╯  
+    ╰────────── Normal ──────────╯  
 
 where x is a (free or bound) variable, Nᵢ's are all in normal form,
-and n and m can be zero. The format is devided into the neutral part
-and the normal part where the neutral part indicates a spine of normal terms
-starting from a variable and the normal part is a sequence of
-abstractions λ followed by a neutral part.
+and n and m can be zero. The syntax is devided into two categories:
 
-This characterisation is defined as two mutually-defiend inductive
-families.
+  * neutral terms: the neutral part indicates a spine of normal terms
+    starting from a variable
+
+  * normal terms: a sequence of abstractions λ followed by neutral
+    terms
+
+Neutral terms are those normal terms which do not create any further
+β-redexs during substitution. This characterisation is defined as two
+mutually-defiend inductive families.
 
 ```agda
 data Neutral : Γ ⊢ A → Set 
@@ -444,8 +448,19 @@ data Normal where
 The soundness of characterisation is proved by induction on the
 derivation of Normal M (resp. Neutral M) and if necessary on M -→ M.
 
-The Proof is left as an exercise for you.
+The completeness is proved by induction on the derivation of M
+(or Γ ⊢ M : A) and by contradiction using ⊥-elim : ⊥ → A.  so that we
+can deduce any property we need once we derive a contradication ⊥.
 
+Proofs are left as exercises. 
+
+```agda
+normal-completeness
+  : (M : Γ ⊢ A) → ((N : Γ ⊢ A) → ¬ (M -→ N))
+  → Normal M 
+
+normal-completeness M M↛N = {!!}
+```
 ### Exercise
 
 ```agda
@@ -494,24 +509,4 @@ in the informal and formal developments.
 progress : (M : Γ ⊢ A)
   → Progress M
 progress M = {!!}
-```
-
-Completeness of the syntactical characterisation of Normal
-----------------------------------------------------------
-
-The completeness is proved by induction on the derivation of M
-(or Γ ⊢ M : A) and by contradiction (given by 
-
-   ⊥-elim : ∀ {A} → ⊥ → A 
-   ⊥-elim ()
-
-where () indicates no constructors are possible) so that we can deduce
-any property we need once we derive a contradication ⊥.
-
-```agda
-normal-completeness
-  : (M : Γ ⊢ A) → ((N : Γ ⊢ A) → ¬ (M -→ N))
-  → Normal M 
-
-normal-completeness M M↛N = {!!}
 ```
