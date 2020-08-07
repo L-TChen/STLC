@@ -39,7 +39,7 @@ data Type : Set where
 Context
 -------
 
-```
+```agda
 infixl 7 _⧺_
 infixl 6 _,_
 infix  4 _∋_
@@ -94,16 +94,16 @@ variable
 
 For example, `S Z : ∅ , A , B ∋ A` means `A` is in the first position. That is, 
 
-```
+```agda
 _ : ∅ , A , B ∋ A
 _ = S Z 
 ```
 
-Lookup is just _‼_ in Haskell. Agda is a total language, but `lookup`
+Lookup is just `_‼_` in Haskell. Agda is a total language, but `lookup`
 can only be partial with this type. We work around this problem by
 postulating `⊥`, as we only use `lookup` for examples.
 
-```
+```agda
 lookup : Context → ℕ → Type
 lookup (Γ , A) zero     =  A
 lookup (Γ , B) (suc n)  =  lookup Γ n
@@ -115,7 +115,7 @@ If `lookup Γ n` finds the element in the n-th position, then the
 memberhsip proof can be produced algorithmatically. Hence we can
 transform a natural number to a membership proof.
 
-```
+```agda
 count : (n : ℕ) → Γ ∋ lookup Γ n
 count {Γ = Γ , _} zero     =  Z
 count {Γ = Γ , _} (suc n)  =  S (count n)
@@ -125,7 +125,7 @@ count {Γ = ∅    }  _        =  ⊥-elim impossible
 
 ### Examples 
 
-```
+```agda
 _ :  ∅ , A , B ∋ A
 _ = count 1
 
@@ -136,14 +136,14 @@ _ = count 0
 Shifting
 --------
  
-     (Aₙ , ... , A₁, A₀) 
-       |    |     |   |
-       ↓    ↓     ↓   ↓  
-   ↦ (Aₙ , ... , A₁, A₀, B)
+      (Aₙ , ... , A₁, A₀) 
+        |    |     |   |
+        ↓    ↓     ↓   ↓  
+    ↦ (Aₙ , ... , A₁, A₀, B)
   
-      n+1         2   1  0
+       n+1         2   1  0
 
-```
+```agda
 ext
   : (∀ {A}   →     Γ ∋ A →     Δ ∋ A)
     ---------------------------------
@@ -155,7 +155,7 @@ ext ρ (S x)  =  S (ρ x)
 Concatenation
 -------------
 
-```
+```agda
 _⧺_ : Context → Context → Context
 Γ ⧺ ∅       = Γ
 Γ ⧺ (Δ , x) = Γ ⧺ Δ , x
