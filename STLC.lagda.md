@@ -455,11 +455,6 @@ can deduce any property we need once we derive a contradication ⊥.
 Proofs are left as exercises. 
 
 ```agda
-normal-completeness
-  : (M : Γ ⊢ A) → ((N : Γ ⊢ A) → ¬ (M -→ N))
-  → Normal M 
-
-normal-completeness M M↛N = {!!}
 ```
 ### Exercise
 
@@ -467,8 +462,13 @@ normal-completeness M M↛N = {!!}
 normal-soundness  : Normal M  → ¬ (M -→ N)
 neutral-soundness : Neutral M → ¬ (M -→ M′)
 
-neutral-soundness = {!!}
 normal-soundness  = {!!}
+neutral-soundness = {!!}
+
+normal-completeness
+  : (M : Γ ⊢ A) → (∀ N → ¬ (M -→ N))
+  → Normal M 
+normal-completeness = {!!}
 ```
 
 Preservation
@@ -508,5 +508,7 @@ in the informal and formal developments.
 ```agda
 progress : (M : Γ ⊢ A)
   → Progress M
-progress M = {!!}
+progress (` x)       = {!!}
+progress (ƛ M)       = {!!}
+progress (M · N)     = {!!}
 ```
