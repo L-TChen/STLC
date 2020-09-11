@@ -1,4 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-} 
 module Normalisation where
 
 open import Data.Product as Prod
@@ -11,132 +10,130 @@ open import Substitution
 ----------------------------------------------------------------------
 -- Weak normalisation property
 
-infix 3 _⇓_ _⇑
+data WeakNeutral {Γ A} : Γ ∋ A → Γ ⊢ B → Set 
+data WeakNormal  {Γ} : Γ ⊢ A → Set
 
-data _⇓_ : (x : Γ ∋ A) → (Γ ⊢ B) → Set 
-data _⇑ : Γ ⊢ A → Set
+data WeakNeutral {Γ A} where
+  `_ : (x : Γ ∋ A)
+       -------------------
+     → WeakNeutral x (` x)
 
-data _⇓_  where
-  `_ : (x : Γ ∋ A) → x ⇓ ` x
+  _·_
+    : WeakNeutral x L
+    → WeakNormal M
+    → WeakNeutral x (L · M)
 
-  _·_ : x ⇓ L → M ⇑
-    → x ⇓ L · M
+data WeakNormal {Γ} where
+  ƛ_ : WeakNormal M
+       ------------
+    →  WeakNormal (ƛ M)
 
-data _⇑ where
-{-
-  wn-absurd : {M : Γ ⊢ ⊥}
-    → M ⇑
-    → absurd A M ⇑
--}
-  ƛ_ : M ⇑
-    --------
-    → ƛ M ⇑
-
-  ᵒ_ : {x : Γ ∋ A} {M : Γ ⊢ B}
-    → x ⇓ M → M ⇑
+  ᵒ_ : WeakNeutral x M
+    → WeakNormal M
 
   _-→⟨_⟩_ : (M : Γ ⊢ A) {M′ : Γ ⊢ A}
     → M -→ M′
-    → M′ ⇑
-    ---------
-    → M  ⇑
+    → WeakNormal M′
+      ------------
+    → WeakNormal M
     
-⇑-Rename : Rename Γ Δ → Set
-⇑-Rename ρ = {A : Type} (x : _ ∋ A) → ` (ρ x) ⇑
+------------------------------------------------------------------------------
+-- Lemma. Every weakly normalising term is reducible to term in normal form.
 
-⇑-Subst : Subst Γ Δ → Set
-⇑-Subst  σ = {A : Type} → (x : _ ∋ A) → σ x ⇑
+wne-soundness : WeakNeutral x M
+  → ∃[ M′ ] (Neutral M′ × (M -↠ M′))
+wnf-soundness : WeakNormal M
+  → ∃[ M′ ] (Normal M′ × (M -↠ M′))
+wne-soundness (` x)     = ⟨ ` x , ⟨ ` x , ` x ∎ ⟩ ⟩
+wne-soundness (M⇓ · N⇓) with wne-soundness M⇓ | wnf-soundness N⇓
+... | ⟨ M′ , ⟨ M′↓ , r₁ ⟩ ⟩ | ⟨ N′ , ⟨ N′↓ , r₂ ⟩ ⟩
+  = ⟨ M′ · N′ , ⟨ M′↓ · N′↓ , ·-↠ r₁ r₂ ⟩ ⟩
+wnf-soundness (ƛ M⇓)    with wnf-soundness M⇓
+... | ⟨ M , ⟨ M⇓′ , r ⟩ ⟩ = ⟨ ƛ M , ⟨ ƛ M⇓′ , ƛ-↠ r ⟩ ⟩
+wnf-soundness (ᵒ M⇓) with wne-soundness M⇓
+... | ⟨ M , ⟨ M⇓′ , r ⟩ ⟩ = ⟨ M , ⟨ ᵒ M⇓′ , r ⟩ ⟩
+wnf-soundness (M -→⟨ M-→N ⟩ N⇓) with wnf-soundness N⇓
+... | ⟨ M′ , ⟨ M′⇓ , r ⟩ ⟩ = ⟨ M′ , ⟨ M′⇓ , M -→⟨ M-→N ⟩ r ⟩ ⟩
 
 ------------------------------------------------------------------------------
 -- Variable renaming respects the weak normalistion property
 
-⇓-rename : (ρ : Rename Γ Δ)
-  → x ⇓ M
-  → ρ x ⇓ rename ρ M 
-⇑-rename : (ρ : Rename Γ Δ)
-  → M ⇑
-  → rename ρ M ⇑
-⇓-rename ρ (` x)           = ` ρ x
-⇓-rename ρ (⇑M · ⇓N) = (⇓-rename ρ ⇑M) · (⇑-rename ρ ⇓N)
-⇑-rename ρ (ƛ wnM)       = ƛ (⇑-rename (ext ρ) wnM)
---⇑-rename ρ (wn-absurd wnM)    = wn-absurd (⇑-rename ρ wnM)
-⇑-rename ρ (ᵒ x)          = ᵒ ⇓-rename ρ x
-⇑-rename ρ (_ -→⟨ M→M′ ⟩ wnM) = _ -→⟨ rename-reduce M→M′ ⟩ (⇑-rename ρ wnM)
+wnf-Subst : Subst Γ Δ → Set
+wnf-Subst  σ = {A : Type} → (x : _ ∋ A) → WeakNormal (σ x)
 
-⇑-ext-subst : {σ : Subst Γ Δ}
-  → ⇑-Subst σ
+wne-rename : (ρ : Rename Γ Δ)
+  → WeakNeutral x M
+  → WeakNeutral (ρ x) (rename ρ M)
+wnf-rename : (ρ : Rename Γ Δ)
+  → WeakNormal M
+  → WeakNormal (rename ρ M)
+wne-rename ρ (` x)             = ` ρ x
+wne-rename ρ (M · N)           = (wne-rename ρ M) · (wnf-rename ρ N)
+wnf-rename ρ (ƛ M)             = ƛ (wnf-rename (ext ρ) M)
+wnf-rename ρ (ᵒ x)             = ᵒ wne-rename ρ x
+wnf-rename ρ (M -→⟨ M→M′ ⟩ M′) =
+  rename ρ M -→⟨ rename-reduce M→M′ ⟩ (wnf-rename ρ M′)
+
+wnf-ext-subst : {σ : Subst Γ Δ}
+  → wnf-Subst σ
     ------------------------
-  → ⇑-Subst (exts {A = A} σ)
-⇑-ext-subst wnσ Z     = ᵒ ` Z
-⇑-ext-subst wnσ (S x) = ⇑-rename S_ (wnσ x)
+  → wnf-Subst (exts {A = A} σ)
+wnf-ext-subst wnσ Z     = ᵒ ` Z
+wnf-ext-subst wnσ (S x) = wnf-rename S_ (wnσ x)
 
 ------------------------------------------------------------------------------
 -- Substitution respects the weak normalisation property.
 
-⇑-subst : {σ : Subst Γ Δ} {A : Type} {M : Γ ⊢ A}
-  → ⇑-Subst σ
-  → M ⇑
-  -----------------
-  → M ⟪ σ ⟫ ⇑
-⇓-subst : {σ : Subst Γ Δ} {A : Type} {M : Γ ⊢ A}
-  → ⇑-Subst σ
-  → x ⇓ M
-  -----------
-  → M ⟪ σ ⟫ ⇑ 
-{-# TERMINATING #-} -- to be removed
-⇑-app : {A B : Type} {M : Γ ⊢ A →̇ B} {N : Γ ⊢ A}
-  → M ⇑ → N ⇑
+private
+  variable
+    σ : Subst Γ Δ
+
+nf-Subst : Subst Γ Δ → Set
+nf-Subst σ = {A : Type} → (x : _ ∋ A) → Normal (σ x)
+
+wnf-subst
+  : wnf-Subst σ
+  → WeakNormal M
+    ------------------
+  → WeakNormal (M ⟪ σ ⟫)
+
+wne-subst
+  : wnf-Subst σ
+  → WeakNeutral x M
+    ------------------
+  → WeakNormal (M ⟪ σ ⟫)
+
+{-# TERMINATING #-} -- how to prove it?
+wnf-app
+  : WeakNormal M
+  → WeakNormal N
     ----------
-  → M · N ⇑
---⇑-subst wnσ (wn-absurd wnM)     = wn-absurd (⇑-subst wnσ wnM)
-⇑-subst wnσ (ƛ wnM)       = ƛ (⇑-subst (⇑-ext-subst wnσ) wnM)
-⇑-subst wnσ (ᵒ wneM)      = ⇓-subst wnσ wneM
-⇑-subst wnσ (M -→⟨ M-→N ⟩ ⇑N) = M ⟪ _ ⟫ -→⟨ subst-reduce M-→N ⟩ ⇑-subst wnσ ⇑N
-⇓-subst wnσ (` x)         = wnσ x
-⇓-subst wnσ (wnL · wneM)  = ⇑-app (⇓-subst wnσ wnL) (⇑-subst wnσ wneM)
---⇑-app (wn-absurd wnM)      wnN  = {!!}
-⇑-app {M = M} {N} (ƛ M⇑) N⇑ = (ƛ _) · N -→⟨ β-ƛ· ⟩ ⇑-subst ⇑-σ M⇑
+  → WeakNormal (M · N)
+
+wnf-subst σ (ƛ M) = ƛ wnf-subst (wnf-ext-subst σ) M
+wnf-subst σ (ᵒ M) = wne-subst σ M 
+wnf-subst σ (M -→⟨ M→N ⟩ N↓) = M ⟪ _ ⟫ -→⟨ subst-reduce M→N ⟩ wnf-subst σ N↓
+wne-subst σ (` x)   = σ x
+wne-subst σ (M · N) = wnf-app (wne-subst σ M) (wnf-subst σ N)
+wnf-app {N = N} (ƛ_ {M = M} M⇓) N⇓ =
+  (ƛ M) · N -→⟨ β-ƛ· ⟩ wnf-subst wnf-σ M⇓ 
   where
-    ⇑-σ : ⇑-Subst (subst-zero N)
-    ⇑-σ Z     = N⇑
-    ⇑-σ (S x) = ᵒ ` x
-⇑-app (ᵒ wnex)    wnN = ᵒ (wnex · wnN) 
-⇑-app (_ -→⟨ x ⟩ wnM) wnN = _ -→⟨ ξ-·ₗ x ⟩ (⇑-app wnM wnN )
+    wnf-σ : wnf-Subst (subst-zero N)
+    wnf-σ Z     = N⇓
+    wnf-σ (S x) = ᵒ ` x
+wnf-app (ᵒ M⇓) N⇓           = ᵒ (M⇓ · N⇓)
+wnf-app (L -→⟨ L→M ⟩ M⇓) N⇓ = L · _ -→⟨ ξ-·ₗ L→M ⟩ wnf-app M⇓ N⇓
 
-------------------------------------------------------------------------------
--- Lemma. Every well-typed term M is weakly normalising
+-- ------------------------------------------------------------------------------
+-- -- Lemma. Every well-typed term M is weakly normalising
 
-weak-normalisation : (M : Γ ⊢ A) → M ⇑
-weak-normalisation (` x)   = ᵒ ` x
---weak-normalisation (absurd _ M) = wn-absurd (weak-normalisation M)
-weak-normalisation (M · N) = ⇑-app (weak-normalisation M)  (weak-normalisation N)
-weak-normalisation (ƛ M)   = ƛ weak-normalisation M
-
-------------------------------------------------------------------------------
--- Lemma. Every weakly normalising term does reduce to a normal form.
-
-ne-soundness : x ⇓ M
-  → ∃[ M′ ] (Neutral M′ × (M -↠ M′))
-nf-soundness : M ⇑
-  → ∃[ M′ ] (Normal M′ × (M -↠ M′))
-ne-soundness (` x)  = ⟨ ` _ , ⟨ ` _ , (` x) ∎ ⟩ ⟩
-ne-soundness (_·_ {L = L} {M = M} wneL wnM) with ne-soundness wneL | nf-soundness wnM
-... | ⟨ L′ , ⟨ neL′ , p ⟩ ⟩ | ⟨ M′ , ⟨ nfM′ , q ⟩ ⟩ = ⟨ L′ · M′ , ⟨ neL′ · nfM′ ,
-  L · M -↠⟨ ·ₗ-↠ p ⟩ L′ · M -↠⟨ ·ᵣ-↠ q ⟩ (L′ · M′) ∎ ⟩ ⟩
---nf-soundness (wn-absurd wnf) with nf-soundness wnf
---... | ⟨ M′ , ⟨ nfM′ , p ⟩ ⟩   = ⟨ absurd _ M′ , ⟨ nf-absurd nfM′ , absurd-↠ p ⟩ ⟩
-nf-soundness (ƛ wnf) with nf-soundness wnf
-... | ⟨ M′ , ⟨ nfM′ , p ⟩ ⟩   = ⟨ ƛ M′ , ⟨ ƛ nfM′ , ƛ-↠ p ⟩ ⟩
-nf-soundness (ᵒ x)    with ne-soundness x
-... | ⟨ M′ , ⟨ neM′ , M-↠M′ ⟩ ⟩ = ⟨ M′ , ⟨ ᵒ neM′  , M-↠M′ ⟩ ⟩
-nf-soundness (_-→⟨_⟩_ M {M′} p nfM′) with nf-soundness nfM′
-... | ⟨ M′′ , ⟨ nfM′′ , q ⟩ ⟩ = ⟨ M′′ , ⟨ nfM′′ , M -→⟨ p ⟩ M′ -↠⟨ q ⟩ M′′ ∎ ⟩ ⟩ 
+weak-normalising : (M : Γ ⊢ A) → WeakNormal M
+weak-normalising (` x)   = ᵒ ` x
+weak-normalising (M · N) = wnf-app (weak-normalising M) (weak-normalising N)
+weak-normalising (ƛ M)   = ƛ weak-normalising M
 
 ------------------------------------------------------------------------------
 -- Corollary. Every well-typed term does reduce to a normal form.
 
 normalise : (M : Γ ⊢ A) → ∃[ N ] (Normal N × (M -↠ N))
-normalise M = nf-soundness (weak-normalisation M)
-
-------------------------------------------------------------------------------
--- Strong normalisation
+normalise M = wnf-soundness (weak-normalising M)

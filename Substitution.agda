@@ -21,7 +21,6 @@ rename-cong : {ρ₁ ρ₂ : Rename Γ Δ}
   → (M : Γ ⊢ A)
   → rename ρ₁ M ≡ rename ρ₂ M
 rename-cong p (` x)      = cong `_ (p x)
---rename-cong p (absurd A M) = cong (absurd A) (rename-cong p M)
 rename-cong p (M · N)    =
   cong₂ _·_ (rename-cong p M) (rename-cong p N)
 rename-cong p (ƛ M)      =
@@ -32,7 +31,6 @@ subst-cong : {σ₁ σ₂ : Subst Γ Δ}
   → (M : Γ ⊢ A)
   → M ⟪ σ₁ ⟫ ≡ M ⟪ σ₂ ⟫
 subst-cong p (` x)      = p x
---subst-cong p (absurd A M) = cong (absurd A) (subst-cong p M)
 subst-cong p (M · N)    = cong₂ _·_ (subst-cong p M) (subst-cong p N)
 subst-cong p (ƛ M)      = cong ƛ_ (subst-cong 
   (λ {Z → refl ; (S x) → cong (rename S_) (p x)}) M)
@@ -57,7 +55,6 @@ rename=subst-ren
   → (M : Γ ⊢ A)
   → rename ρ M ≡ M ⟪ ren ρ ⟫
 rename=subst-ren (` x)      = refl
---rename=subst-ren (absurd A M) = cong (absurd A) (rename=subst-ren M)
 rename=subst-ren (M · N)    =
   cong₂ _·_ (rename=subst-ren M) (rename=subst-ren N)
 rename=subst-ren {ρ = ρ} (ƛ M)      = cong ƛ_ (begin
@@ -79,7 +76,6 @@ rename-comp
   → {M : Γ ⊢ A}
   → rename ρ₂ (rename ρ₁ M) ≡ rename (ρ₂ ∘ ρ₁) M
 rename-comp ρ₁ ρ₂ {M = ` x}      = refl
---rename-comp ρ₁ ρ₂ {M = absurd A M} = cong (absurd A) (rename-comp ρ₁ ρ₂)
 rename-comp ρ₁ ρ₂ {M = M · N}    = cong₂ _·_ (rename-comp ρ₁ ρ₂) (rename-comp ρ₁ ρ₂)
 rename-comp ρ₁ ρ₂ {M = ƛ M}      = cong ƛ_ (begin
   rename (ext ρ₂) (rename (ext ρ₁) M)
@@ -145,7 +141,6 @@ punchIn-punchesIn-comm : (σ : Subst Γ Δ)
   → rename (punchIn B Ξ) M ⟪ punchesIn Ξ (exts σ) ⟫
    ≡ rename (punchIn B Ξ) (M ⟪ punchesIn Ξ σ ⟫)
 punchIn-punchesIn-comm σ (` x)      = punchesIn-punchIn-comm σ x
---punchIn-punchesIn-comm σ (absurd A M) = cong (absurd A) (punchIn-punchesIn-comm σ M)
 punchIn-punchesIn-comm σ (M · N)    = cong₂ _·_ (punchIn-punchesIn-comm σ M) (punchIn-punchesIn-comm σ N)
 punchIn-punchesIn-comm σ (ƛ M) = cong ƛ_ (begin
   rename (ext (punchIn _ _)) M ⟪ exts (punchesIn _ (exts σ)) ⟫
@@ -193,7 +188,6 @@ subst-idL
   : (M : Γ ⊢ A)
   → M ⟪ ids ⟫ ≡ M
 subst-idL (` x)      = refl
---subst-idL (absurd A M) = cong (absurd A) (subst-idL M)
 subst-idL (M · N)    = cong₂ _·_    (subst-idL M) (subst-idL N)
 subst-idL (ƛ_ M)     = begin
   ƛ M ⟪ exts ids ⟫ 
@@ -212,7 +206,6 @@ subst-assoc
   → (M : Γ ⊢ A)
   →  M ⟪ σ₁ ⟫ ⟪ σ₂ ⟫ ≡ M ⟪ σ₁ ⨟ σ₂ ⟫
 subst-assoc σ₁ σ₂ (` x)      = refl
---subst-assoc σ₁ σ₂ (absurd A M) = cong (absurd A) (subst-assoc σ₁ σ₂ M)
 subst-assoc σ₁ σ₂ (M · N)    = cong₂ _·_ (subst-assoc σ₁ σ₂ M) (subst-assoc σ₁ σ₂ N)
 subst-assoc σ₁ σ₂ (ƛ M)      = cong  ƛ_ (begin
   M ⟪ exts σ₁ ⟫ ⟪ exts σ₂ ⟫ 
