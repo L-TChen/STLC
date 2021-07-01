@@ -1,12 +1,19 @@
-module Normalisation where
+module Language.STLC.WeakNormalisation where
 
 open import Data.Product as Prod
   renaming (_,_ to ⟨_,_⟩)
 open import Data.Sum
 
-open import STLC
-open import Substitution
+open import Language.STLC.Term
+open import Language.STLC.Normal
+open import Language.STLC.Substitution
 
+private
+  variable
+    A B : Type
+    Γ Δ : Context
+    M N L : Γ ⊢ A
+    x : Γ ∋ A
 ----------------------------------------------------------------------
 -- Weak normalisation property
 
@@ -41,9 +48,9 @@ data WeakNormal {Γ} where
 -- Lemma. Every weakly normalising term is reducible to term in normal form.
 
 wne-soundness : WeakNeutral x M
-  → ∃[ M′ ] (Neutral M′ × (M -↠ M′))
+  → ∃[ M′ ] (M′ isNeutral × (M -↠ M′))
 wnf-soundness : WeakNormal M
-  → ∃[ M′ ] (Normal M′ × (M -↠ M′))
+  → ∃[ M′ ] (M′ isNormal  × (M -↠ M′))
 wne-soundness (` x)     = ⟨ ` x , ⟨ ` x , ` x ∎ ⟩ ⟩
 wne-soundness (M⇓ · N⇓) with wne-soundness M⇓ | wnf-soundness N⇓
 ... | ⟨ M′ , ⟨ M′↓ , r₁ ⟩ ⟩ | ⟨ N′ , ⟨ N′↓ , r₂ ⟩ ⟩
@@ -89,7 +96,7 @@ private
     σ : Subst Γ Δ
 
 nf-Subst : Subst Γ Δ → Set
-nf-Subst σ = {A : Type} → (x : _ ∋ A) → Normal (σ x)
+nf-Subst σ = {A : Type} → (x : _ ∋ A) → (σ x) isNormal
 
 wnf-subst
   : wnf-Subst σ
@@ -124,16 +131,17 @@ wnf-app {N = N} (ƛ_ {M = M} M⇓) N⇓ =
 wnf-app (ᵒ M⇓) N⇓           = ᵒ (M⇓ · N⇓)
 wnf-app (L -→⟨ L→M ⟩ M⇓) N⇓ = L · _ -→⟨ ξ-·ₗ L→M ⟩ wnf-app M⇓ N⇓
 
--- ------------------------------------------------------------------------------
--- -- Lemma. Every well-typed term M is weakly normalising
+------------------------------------------------------------------------------
+-- Lemma. Every well-typed term M is weakly normalising
 
 weak-normalising : (M : Γ ⊢ A) → WeakNormal M
 weak-normalising (` x)   = ᵒ ` x
+weak-normalising (abort _ M) = {!!}
 weak-normalising (M · N) = wnf-app (weak-normalising M) (weak-normalising N)
 weak-normalising (ƛ M)   = ƛ weak-normalising M
 
 ------------------------------------------------------------------------------
 -- Corollary. Every well-typed term does reduce to a normal form.
 
-normalise : (M : Γ ⊢ A) → ∃[ N ] (Normal N × (M -↠ N))
+normalise : (M : Γ ⊢ A) → ∃[ N ] (N isNormal × (M -↠ N))
 normalise M = wnf-soundness (weak-normalising M)

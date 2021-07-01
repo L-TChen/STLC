@@ -1,11 +1,17 @@
-module Substitution where
+module Language.STLC.Substitution where
 
 open import Function hiding (_∋_)
-open import Relation.Binary.PropositionalEquality as PropEq
+open import Relation.Binary.PropositionalEquality as Eq
   using (_≡_; refl; sym; cong; cong₂; cong-app)
 
-open import STLC hiding (_∎)
+open import Language.STLC.Term hiding (_∎)
 
+private
+  variable
+    Γ Δ Σ Ξ : Context
+    A B C   : Type
+    M N     : Γ ⊢ A
+    
 infixr 5 _⨟_
 
 _⨟_ : ∀{Γ Δ Σ} → Subst Γ Δ → Subst Δ Σ → Subst Γ Σ
@@ -20,20 +26,20 @@ rename-cong : {ρ₁ ρ₂ : Rename Γ Δ}
   → (∀ {A} (x : Γ ∋ A) → ρ₁ x ≡ ρ₂ x)
   → (M : Γ ⊢ A)
   → rename ρ₁ M ≡ rename ρ₂ M
-rename-cong p (` x)      = cong `_ (p x)
-rename-cong p (M · N)    =
-  cong₂ _·_ (rename-cong p M) (rename-cong p N)
-rename-cong p (ƛ M)      =
-  cong ƛ_ (rename-cong (λ { Z → refl ; (S x) → cong S_ (p x)}) M)
+rename-cong p (` x)     = cong `_ (p x)
+rename-cong p (M · N)   = cong₂ _·_ (rename-cong p M) (rename-cong p N)
+rename-cong p (ƛ M)     = cong ƛ_ (rename-cong (λ { Z → refl ; (S x) → cong S_ (p x)}) M)
+rename-cong p (abort _ M) = cong (abort _) (rename-cong p M)
 
 subst-cong : {σ₁ σ₂ : Subst Γ Δ}
   → (∀ {A} (x : Γ ∋ A) → σ₁ x ≡ σ₂ x)
   → (M : Γ ⊢ A)
   → M ⟪ σ₁ ⟫ ≡ M ⟪ σ₂ ⟫
-subst-cong p (` x)      = p x
-subst-cong p (M · N)    = cong₂ _·_ (subst-cong p M) (subst-cong p N)
-subst-cong p (ƛ M)      = cong ƛ_ (subst-cong 
+subst-cong p (` x)     = p x
+subst-cong p (M · N)   = cong₂ _·_ (subst-cong p M) (subst-cong p N)
+subst-cong p (ƛ M)     = cong ƛ_ (subst-cong 
   (λ {Z → refl ; (S x) → cong (rename S_) (p x)}) M)
+subst-cong p (abort _ M) = cong (abort _) (subst-cong p M)
 
 ----------------------------------------------------------------------
 -- Properties of ext 
@@ -55,6 +61,7 @@ rename=subst-ren
   → (M : Γ ⊢ A)
   → rename ρ M ≡ M ⟪ ren ρ ⟫
 rename=subst-ren (` x)      = refl
+rename=subst-ren (abort _ M)  = cong (abort _) (rename=subst-ren M)
 rename=subst-ren (M · N)    =
   cong₂ _·_ (rename=subst-ren M) (rename=subst-ren N)
 rename=subst-ren {ρ = ρ} (ƛ M)      = cong ƛ_ (begin
@@ -65,7 +72,7 @@ rename=subst-ren {ρ = ρ} (ƛ M)      = cong ƛ_ (begin
   M ⟪ exts (ren ρ) ⟫
     ∎)
   where
-    open PropEq.≡-Reasoning
+    open Eq.≡-Reasoning
     ren-ext : (ρ : Rename Γ Δ)
       → ∀ {B} (x : Γ , A ∋ B) → ren (ext ρ) x ≡ exts (ren ρ) x
     ren-ext ρ Z     = refl
@@ -76,6 +83,7 @@ rename-comp
   → {M : Γ ⊢ A}
   → rename ρ₂ (rename ρ₁ M) ≡ rename (ρ₂ ∘ ρ₁) M
 rename-comp ρ₁ ρ₂ {M = ` x}      = refl
+rename-comp ρ₁ ρ₂ {M = abort _ M}  = cong (abort _) (rename-comp ρ₁ ρ₂)
 rename-comp ρ₁ ρ₂ {M = M · N}    = cong₂ _·_ (rename-comp ρ₁ ρ₂) (rename-comp ρ₁ ρ₂)
 rename-comp ρ₁ ρ₂ {M = ƛ M}      = cong ƛ_ (begin
   rename (ext ρ₂) (rename (ext ρ₁) M)
@@ -84,7 +92,7 @@ rename-comp ρ₁ ρ₂ {M = ƛ M}      = cong ƛ_ (begin
     ≡⟨ rename-cong (ext-comp ρ₁ ρ₂) M ⟩
   rename (ext (ρ₂ ∘ ρ₁))   M
   ∎)
-  where open PropEq.≡-Reasoning
+  where open Eq.≡-Reasoning
 
 ----------------------------------------------------------------------
 -- punchIn: Weakening at any position
@@ -134,13 +142,14 @@ punchesIn-punchIn-comm {Ξ = Ξ , C} σ (S x) = begin
     ≡⟨ sym (rename-comp S_ (punchIn _ (Ξ , C))) ⟩
   rename (punchIn _ (Ξ , C)) (rename S_ (punchesIn Ξ σ x))
     ∎
-  where open PropEq.≡-Reasoning
+  where open Eq.≡-Reasoning
 
 punchIn-punchesIn-comm : (σ : Subst Γ Δ)
   → (M : Γ ⧺ Ξ ⊢ A)
   → rename (punchIn B Ξ) M ⟪ punchesIn Ξ (exts σ) ⟫
    ≡ rename (punchIn B Ξ) (M ⟪ punchesIn Ξ σ ⟫)
 punchIn-punchesIn-comm σ (` x)      = punchesIn-punchIn-comm σ x
+punchIn-punchesIn-comm σ (abort _ M)  = cong (abort _) (punchIn-punchesIn-comm σ M)
 punchIn-punchesIn-comm σ (M · N)    = cong₂ _·_ (punchIn-punchesIn-comm σ M) (punchIn-punchesIn-comm σ N)
 punchIn-punchesIn-comm σ (ƛ M) = cong ƛ_ (begin
   rename (ext (punchIn _ _)) M ⟪ exts (punchesIn _ (exts σ)) ⟫
@@ -155,7 +164,7 @@ punchIn-punchesIn-comm σ (ƛ M) = cong ƛ_ (begin
     ≡⟨ cong (rename (ext (punchIn _ _))) (subst-cong (sym ∘ exts-punchesIn=punchesIn) M) ⟩
   rename (ext (punchIn _ _)) (M ⟪ exts (punchesIn _ σ) ⟫)
     ∎)
-  where open PropEq.≡-Reasoning
+  where open Eq.≡-Reasoning
 
 rename-exts : (σ : Subst Γ Δ)
   → (M : Γ ⊢ A)
@@ -169,7 +178,7 @@ rename-exts σ M = begin
     ≡⟨ rename-cong (sym ∘ S=punchIn) (M ⟪ σ ⟫) ⟩
   rename S_ (M ⟪ σ ⟫)
     ∎ 
-  where open PropEq.≡-Reasoning
+  where open Eq.≡-Reasoning
 
 ren-ext-comm : (ρ : Rename Γ Δ)
     → (x : Γ , B ∋ A)
@@ -188,6 +197,7 @@ subst-idL
   : (M : Γ ⊢ A)
   → M ⟪ ids ⟫ ≡ M
 subst-idL (` x)      = refl
+subst-idL (abort _ M)  = cong (abort _) (subst-idL M)
 subst-idL (M · N)    = cong₂ _·_    (subst-idL M) (subst-idL N)
 subst-idL (ƛ_ M)     = begin
   ƛ M ⟪ exts ids ⟫ 
@@ -196,7 +206,7 @@ subst-idL (ƛ_ M)     = begin
     ≡⟨ cong ƛ_ (subst-idL M) ⟩
   ƛ M  ∎
   where
-    open PropEq.≡-Reasoning
+    open Eq.≡-Reasoning
     exts-ids=ids : (x : Γ , A ∋ B) → (exts ids) x ≡ ids x
     exts-ids=ids Z     = refl
     exts-ids=ids (S x) = refl
@@ -205,9 +215,10 @@ subst-assoc
   : (σ₁ : Subst Γ Δ) (σ₂ : Subst Δ Ξ)
   → (M : Γ ⊢ A)
   →  M ⟪ σ₁ ⟫ ⟪ σ₂ ⟫ ≡ M ⟪ σ₁ ⨟ σ₂ ⟫
-subst-assoc σ₁ σ₂ (` x)      = refl
-subst-assoc σ₁ σ₂ (M · N)    = cong₂ _·_ (subst-assoc σ₁ σ₂ M) (subst-assoc σ₁ σ₂ N)
-subst-assoc σ₁ σ₂ (ƛ M)      = cong  ƛ_ (begin
+subst-assoc σ₁ σ₂ (` x)       = refl
+subst-assoc σ₁ σ₂ (abort _ M) = cong (abort _) (subst-assoc σ₁ σ₂ M)
+subst-assoc σ₁ σ₂ (M · N)     = cong₂ _·_ (subst-assoc σ₁ σ₂ M) (subst-assoc σ₁ σ₂ N)
+subst-assoc σ₁ σ₂ (ƛ M)       = cong  ƛ_ (begin
   M ⟪ exts σ₁ ⟫ ⟪ exts σ₂ ⟫ 
     ≡⟨ subst-assoc (exts σ₁) (exts σ₂) M ⟩
   M ⟪ _⟪ exts σ₂ ⟫ ∘ exts σ₁ ⟫
@@ -215,7 +226,7 @@ subst-assoc σ₁ σ₂ (ƛ M)      = cong  ƛ_ (begin
   M ⟪ exts ( _⟪ σ₂ ⟫ ∘ σ₁) ⟫
     ∎)
   where
-    open PropEq.≡-Reasoning
+    open Eq.≡-Reasoning
     exts-subst : (σ₁ : Subst Γ Δ) (σ₂ : Subst Δ Ξ)
       → (x : Γ , B ∋ A) 
       → (exts σ₁ ⨟ exts σ₂) x ≡ exts (σ₁ ⨟ σ₂) x
@@ -245,7 +256,7 @@ rename-subst ρ σ M = begin
     ≡⟨⟩
   M ⟪ σ ∘ ρ ⟫
     ∎
-  where open PropEq.≡-Reasoning
+  where open Eq.≡-Reasoning
 
 subst-zero-comm : (σ : Subst Γ Δ)
   → (N : Γ ⊢ B) (x : Γ , B ∋ A)
@@ -262,7 +273,7 @@ subst-zero-comm {Γ} {Δ} σ N (S x) = begin
     ≡⟨ subst-idL (σ x) ⟩
   σ x
     ∎
-  where open PropEq.≡-Reasoning
+  where open Eq.≡-Reasoning
 
 ------------------------------------------------------------------------------
 -- Substitution Lemma
@@ -279,7 +290,7 @@ subst-ssubst σ M N = begin
     ≡⟨ sym (subst-assoc (subst-zero N) σ M) ⟩
   (M ⟪ subst-zero N ⟫) ⟪ σ ⟫ 
     ∎
-  where open PropEq.≡-Reasoning
+  where open Eq.≡-Reasoning
 
 rename-ssubst : (ρ : Rename Γ Δ)
   → (M : Γ , A ⊢ B) (N : Γ ⊢ A)
@@ -298,7 +309,7 @@ rename-ssubst ρ M N = begin
   rename ρ (M [ N ])
     ∎
   where
-    open PropEq.≡-Reasoning
+    open Eq.≡-Reasoning
 
 ------------------------------------------------------------------------------
 -- Substitution respects reduction
@@ -307,16 +318,18 @@ rename-reduce : {ρ : Rename Γ Δ}
   → M -→ N
   → rename ρ M -→ rename ρ N
 rename-reduce {ρ = ρ} (β-ƛ· {M = M} {N})
-  rewrite PropEq.sym (rename-ssubst ρ M N) = β-ƛ· 
-rename-reduce (ξ-ƛ M-→N)  = ξ-ƛ  (rename-reduce M-→N)
-rename-reduce (ξ-·ₗ M-→N) = ξ-·ₗ (rename-reduce M-→N)
-rename-reduce (ξ-·ᵣ M-→N) = ξ-·ᵣ (rename-reduce M-→N)
+  rewrite Eq.sym (rename-ssubst ρ M N) = β-ƛ· 
+rename-reduce (ξ-ƛ M→N)  = ξ-ƛ  (rename-reduce M→N)
+rename-reduce (ξ-·ₗ M→N) = ξ-·ₗ (rename-reduce M→N)
+rename-reduce (ξ-·ᵣ M→N) = ξ-·ᵣ (rename-reduce M→N)
+rename-reduce (ξ-abort M→N) = ξ-abort (rename-reduce M→N)
 
 subst-reduce : {σ : Subst Γ Δ}
   → M -→ N
   → M ⟪ σ ⟫ -→ N ⟪ σ ⟫
 subst-reduce {σ = σ} (β-ƛ· {M = M} {N})
-  rewrite PropEq.sym (subst-ssubst σ M N) = β-ƛ·
-subst-reduce (ξ-ƛ M-→N)  = ξ-ƛ  (subst-reduce M-→N)
-subst-reduce (ξ-·ₗ M-→N) = ξ-·ₗ (subst-reduce M-→N)
-subst-reduce (ξ-·ᵣ M-→N) = ξ-·ᵣ (subst-reduce M-→N)
+  rewrite Eq.sym (subst-ssubst σ M N) = β-ƛ·
+subst-reduce (ξ-ƛ M→N)     = ξ-ƛ  (subst-reduce M→N)
+subst-reduce (ξ-·ₗ M→N)    = ξ-·ₗ (subst-reduce M→N)
+subst-reduce (ξ-·ᵣ M→N)    = ξ-·ᵣ (subst-reduce M→N)
+subst-reduce (ξ-abort M→N) = ξ-abort (subst-reduce M→N)

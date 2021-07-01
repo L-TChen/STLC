@@ -1,11 +1,17 @@
-module Confluence where
+module Language.STLC.Confluence where
 
 open import Data.Product as Prod
   renaming (_,_ to ⟨_,_⟩)
 
-open import STLC
-open import Substitution
+open import Language.STLC.Term
+open import Language.STLC.Substitution
 
+private
+  variable
+    Γ Δ            : Context
+    A B C          : Type
+    M N L M′ N′ L′ : Γ ⊢ A
+    
 ------------------------------------------------------------------------------
 -- Parallel reduction, see
 -- M. Takahashi, “Parallel Reductions in λ-Calculus,” Inf. Comput., vol. 118, no. 1, pp. 120–127, 1995.
@@ -25,6 +31,9 @@ data _⇛_  {Γ} : (M N : Γ ⊢ A) → Set where
     → N ⇛ N′
       ----------------
     → M · N ⇛ M′ · N′
+  pabort
+    : M ⇛ M′
+    → abort A M ⇛ abort A M′
 
   pbeta
     : M ⇛ M′
@@ -37,7 +46,6 @@ data _⇛_  {Γ} : (M N : Γ ⊢ A) → Set where
 
 infix  2 _⇛*_
 infixr 2 _⇛⟨_⟩_
---infix  3 _∎
 
 data _⇛*_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
   _∎ : (M : Γ ⊢ A)
@@ -51,21 +59,21 @@ data _⇛*_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
 ------------------------------------------------------------------------------
 -- ⇛ is reflexive
 par-refl : M ⇛ M
-par-refl {M = ` _}        = pvar
---par-refl {M = absurd A M} = pabsurd par-refl 
-par-refl {M = ƛ _}        = pabs par-refl
-par-refl {M = _ · _}      = papp par-refl par-refl
+par-refl {M = ` _}     = pvar
+par-refl {M = abort _ M} = pabort par-refl 
+par-refl {M = ƛ _}     = pabs par-refl
+par-refl {M = _ · _}   = papp par-refl par-refl
 
 ------------------------------------------------------------------------------
 -- Sandwitch parallel reduction between single-step reduction and multi-step reduction
 -- -→ ⊆ ⇛ ⊆ -↠
 
 -→⊆⇛ : M -→ N → M ⇛ N
--→⊆⇛ β-ƛ·            = pbeta par-refl par-refl  
----→⊆⇛ (ξ-absurd M→M′) = pabsurd (-→⊆⇛ M→M′)   
--→⊆⇛ (ξ-ƛ M→M′)   = pabs (-→⊆⇛ M→M′)
--→⊆⇛ (ξ-·ₗ L→L′)  = papp (-→⊆⇛ L→L′) par-refl
--→⊆⇛ (ξ-·ᵣ M→M′)  = papp par-refl    (-→⊆⇛ M→M′)
+-→⊆⇛ β-ƛ·           = pbeta par-refl par-refl  
+-→⊆⇛ (ξ-abort M→M′) = pabort (-→⊆⇛ M→M′)   
+-→⊆⇛ (ξ-ƛ M→M′)     = pabs (-→⊆⇛ M→M′)
+-→⊆⇛ (ξ-·ₗ L→L′)    = papp (-→⊆⇛ L→L′) par-refl
+-→⊆⇛ (ξ-·ᵣ M→M′)    = papp par-refl    (-→⊆⇛ M→M′)
 
 -↠⊆⇛* 
   : M -↠ N
@@ -76,6 +84,7 @@ par-refl {M = _ · _}      = papp par-refl par-refl
 
 ⇛⊆-↠ : M ⇛ N → M -↠ N
 ⇛⊆-↠ pvar  = _ ∎ 
+⇛⊆-↠ (pabort M⇛M′) = abort-↠ (⇛⊆-↠ M⇛M′)
 ⇛⊆-↠ (pbeta {M = M} {M′} {N} {N′} M⇛M′ N⇛N′) =
   (ƛ M) · N
     -↠⟨ ·-↠ (ƛ-↠ (⇛⊆-↠ M⇛M′)) (⇛⊆-↠ N⇛N′) ⟩
@@ -101,6 +110,7 @@ par-rename
   → M ⇛ M′
   → rename ρ M ⇛ rename ρ M′
 par-rename pvar              = pvar
+par-rename (pabort M⇛M′)     = pabort (par-rename M⇛M′)
 par-rename (pabs M⇛M′)       = pabs (par-rename M⇛M′)
 par-rename (papp M⇛M′ N⇛N′)  = papp (par-rename M⇛M′) (par-rename N⇛N′)
 par-rename {Γ} {Δ} {ρ = ρ} (pbeta {M′ = M′} {N′ = N′} M⇛M′ N⇛N′)
@@ -123,7 +133,7 @@ par-subst
   → M ⇛ M′
   → M ⟪ σ ⟫ ⇛ M′ ⟪ τ ⟫
 par-subst σ⇛τ pvar   = σ⇛τ
---par-subst σ⇛τ (pabsurd  M⇛M′)  = pabsurd (par-subst σ⇛τ M⇛M′)
+par-subst σ⇛τ (pabort  M⇛M′)  = pabort (par-subst σ⇛τ M⇛M′)
 par-subst σ⇛τ (papp M⇛M′ N⇛N′) =
   papp (par-subst σ⇛τ M⇛M′) (par-subst σ⇛τ N⇛N′)
 par-subst σ⇛τ (pabs M⇛M′) =
@@ -150,7 +160,7 @@ sub-par {A} {Γ} {B} {M} {M′} {N} {N′} M⇛M′ N⇛N′ =
 _⁺ : ∀ {Γ A}
   → Γ ⊢ A → Γ ⊢ A
 (` x) ⁺       =  ` x
---(absurd _ M) ⁺  = absurd _ (M ⁺)
+(abort A M) ⁺  = abort A (M ⁺)
 (ƛ M) ⁺       = ƛ (M ⁺)
 ((ƛ M) · N) ⁺ = M ⁺ [ N ⁺ ]
 (M · N) ⁺     = M ⁺ · (N ⁺)
@@ -160,14 +170,14 @@ par-triangle : ∀ {Γ A} {M N : Γ ⊢ A}
     -------
   → N ⇛ M ⁺
 par-triangle pvar = pvar
---par-triangle (pabsurd M⇛M′)    = pabsurd (par-triangle M⇛M′)
+par-triangle (pabort M⇛M′)     = pabort (par-triangle M⇛M′)
 par-triangle (pbeta M⇛M′ N⇛N′) = sub-par (par-triangle M⇛M′) (par-triangle N⇛N′) 
 par-triangle (pabs M⇛M′)       = pabs (par-triangle M⇛M′)
 par-triangle (papp {M = ƛ _} (pabs M⇛M′) N⇛N′) =
   pbeta (par-triangle M⇛M′) (par-triangle N⇛N′)
-par-triangle (papp {M = ` x} pvar N)         = papp (par-triangle pvar)  (par-triangle N)
---par-triangle (papp {M = absurd A M} M⇛M′ N⇛N′) = papp (par-triangle M⇛M′) (par-triangle N⇛N′)
-par-triangle (papp {M = L · M} LM⇛M′ N)      = papp (par-triangle LM⇛M′) (par-triangle N)
+par-triangle (papp {M = ` x} pvar N)        = papp (par-triangle pvar)  (par-triangle N)
+par-triangle (papp {M = abort _ _} M⇛M′ N⇛N′) = papp (par-triangle M⇛M′) (par-triangle N⇛N′)
+par-triangle (papp {M = L · M} LM⇛M′ N)     = papp (par-triangle LM⇛M′) (par-triangle N)
   
 strip
   : M ⇛ N

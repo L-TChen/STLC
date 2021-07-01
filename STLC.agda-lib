@@ -1,0 +1,8 @@
+name: STLC
+include: 
+  src
+depend: 
+  standard-library
+
+flags:
+  --without-K --auto-inline --no-import-sorts
