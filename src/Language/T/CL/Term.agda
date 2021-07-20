@@ -25,7 +25,7 @@ data Term : Ty → 𝓤₀ ̇ where
   _·_  : (c : Term (A `→ B)) → (a : Term A) → Term B
   `0   : Term `ℕ
   `S   : Term `ℕ → Term `ℕ
-  `rec  : Term C → Term (`ℕ `→ C `→ C) → Term (`ℕ `→ C)
+  `rec : Term C → Term (`ℕ `→ C `→ C) → Term (`ℕ `→ C)
 
 private
   variable
@@ -175,8 +175,8 @@ recᴺ (d , d↓) (e , e↓) =
 -- Denotational semantics
 
 ⟦_⟧Ty : Ty → 𝓤₀ ̇
-⟦ `⊥    ⟧Ty  = ⊥
-⟦ `ℕ    ⟧Ty  = ℕ
+⟦ `⊥     ⟧Ty = ⊥
+⟦ `ℕ     ⟧Ty = ℕ
 ⟦ A `→ B ⟧Ty = NF (A `→ B) × (⟦ A ⟧Ty → ⟦ B ⟧Ty)
 
 tmOf : ⟦ A `→ B ⟧Ty → Term (A `→ B)
@@ -212,7 +212,7 @@ rec d e (suc n) = e n (rec d e n)
 ------------------------------------------------------------------------------
 -- Logical consistency by evaluation
 
-consistency : Term `⊥ → ⊥
+consistency : ¬ Term `⊥ 
 consistency = ⟦_⟧
 
 ------------------------------------------------------------------------------
@@ -261,7 +261,7 @@ module _ where
   glued    : (a : Term A) → Gl A ⟦ a ⟧
   gluedRec : Gl (`ℕ `→ C) ⟦ `rec d e ⟧
 
-  gluedRec {C} {d} {e} {zero}  tt = (begin
+  gluedRec {_} {d} {e} {zero}  tt = (begin
     `rec (nf′ d) (nf′ e) · `0
       -→⟨ β-rec0 ⟩
     nf′ d ∎)
@@ -276,7 +276,7 @@ module _ where
     reify′ (⟦ e ⟧ ·ₘ n) · (`rec (nf′ d) (nf′ e) · reify′ n)
       -↠⟨ -↠-·ᵣ (gluedRec {C} {d} {e} {n} tt .proj₁) ⟩
     reify′ (⟦ e ⟧ ·ₘ n) · reify′ (⟦ `rec d e ⟧ ·ₘ n)
-      -↠⟨ glued e _ .proj₂ (gluedRec{C} {d} {e} {n} tt .proj₂) .proj₁ ⟩
+      -↠⟨ glued e _ .proj₂ (gluedRec {C} {d} {e} {n} tt .proj₂) .proj₁ ⟩
     reify′ (⟦ `rec d e ⟧ ·ₘ suc n) ∎)
     , glued e _ .proj₂ (gluedRec {C} {d} {e} {n} tt .proj₂) .proj₂
 

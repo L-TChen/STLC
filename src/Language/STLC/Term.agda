@@ -1,9 +1,9 @@
 module Language.STLC.Term where
 
-open import Data.Nat
-open import Relation.Nullary.Decidable
+open import Prelude
 
 open import Language.STLC.Context public
+
 
 infix  3 _⊢_
 infixr 5 ƛ_
@@ -11,12 +11,12 @@ infixl 7 _·_
 infixl 8 _[_] _⟪_⟫
 infixr 9 `_ #_
 
-data _⊢_ (Γ : Context) : Type → Set
+data _⊢_ (Γ : Context) : Typ → 𝓤₀ ̇
 
 private
   variable
     Γ Δ            : Context
-    A B C          : Type
+    A B C          : Typ
     M N L M′ N′ L′ : Γ ⊢ A
 
 data _⊢_ Γ where
@@ -50,7 +50,7 @@ rename ρ (M · N)   = rename ρ M · rename ρ N
 rename ρ (ƛ M)     = ƛ rename (ext ρ) M
 rename ρ (abort _ M) = abort _ (rename ρ M)
 
-Subst : Context → Context → Set
+Subst : Context → Context → 𝓤₀ ̇
 Subst Γ Δ = ∀ {A} → Γ ∋ A → Δ ⊢ A
 
 exts : Subst Γ Δ → Subst (Γ , A) (Δ , A)
@@ -66,7 +66,7 @@ _⟪_⟫
 (ƛ M)   ⟪ σ ⟫ = ƛ M ⟪ exts σ ⟫
 abort _ M ⟪ σ ⟫ = abort _ (M ⟪ σ ⟫)
 
-subst-zero : {B : Type}
+subst-zero : {B : Typ}
   → Γ ⊢ B
   → Subst (Γ , B) Γ
 subst-zero N Z     =  N
@@ -79,7 +79,7 @@ _[_] : Γ , B ⊢ A
 _[_] N M =  N ⟪ subst-zero M ⟫
 
 infix 3 _-→_
-data _-→_ {Γ} : (M N : Γ ⊢ A) → Set where
+data _-→_ {Γ} : (M N : Γ ⊢ A) → 𝓤₀ ̇ where
   β-ƛ·
     : (ƛ M) · N -→ M [ N ]
   ξ-ƛ
@@ -97,7 +97,7 @@ data _-→_ {Γ} : (M N : Γ ⊢ A) → Set where
     : M -→ M′
     → abort A M -→ abort A M′
 
-data _-↠_ {Γ A} : (M N : Γ ⊢ A) → Set where
+data _-↠_ {Γ A} : (M N : Γ ⊢ A) → 𝓤₀ ̇ where
   _∎ : (M : Γ ⊢ A)
     → M -↠ M
     

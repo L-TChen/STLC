@@ -1,15 +1,17 @@
 module Language.STLC.Progress where
 
+open import Prelude
+
 open import Language.STLC.Term
 open import Language.STLC.Normal
 
 private
   variable
     Γ : Context
-    A : Type
+    A : Typ
     M N : Γ ⊢ A
 
-data Progress (M : Γ ⊢ A) : Set where
+data Progress (M : Γ ⊢ A) : 𝓤₀ ̇ where
   step
     : M -→ N
       ----------

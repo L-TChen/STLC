@@ -1,20 +1,18 @@
 module Language.STLC.Consistency where
 
-open import Data.Unit
-open import Data.Empty
-
+open import Prelude
 open import Language.STLC.Term
 
 private
   variable
-    A : Type
+    A : Typ
     Γ : Context
 
-⟦_⟧ty : Type → Set
+⟦_⟧ty : Typ → 𝓤₀ ̇
 ⟦ ⊥̇     ⟧ty = ⊥
 ⟦ A →̇ B ⟧ty = ⟦ A ⟧ty → ⟦ B ⟧ty
 
-⟦_⟧cxt : Context → Set
+⟦_⟧cxt : Context → 𝓤₀ ̇
 ⟦ Γ ⟧cxt = ∀ {A} → Γ ∋ A → ⟦ A ⟧ty
 
 update : ⟦ Γ ⟧cxt → ⟦ A ⟧ty → ⟦ Γ , A ⟧cxt

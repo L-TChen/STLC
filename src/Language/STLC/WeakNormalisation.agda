@@ -4,21 +4,23 @@ open import Data.Product as Prod
   renaming (_,_ to ⟨_,_⟩)
 open import Data.Sum
 
+open import Prelude 
+
 open import Language.STLC.Term
 open import Language.STLC.Normal
 open import Language.STLC.Substitution
 
 private
   variable
-    A B : Type
+    A B : Typ
     Γ Δ : Context
     M N L : Γ ⊢ A
     x : Γ ∋ A
 ----------------------------------------------------------------------
 -- Weak normalisation property
 
-data WeakNeutral {Γ A} : Γ ∋ A → Γ ⊢ B → Set 
-data WeakNormal  {Γ} : Γ ⊢ A → Set
+data WeakNeutral {Γ A} : Γ ∋ A → Γ ⊢ B → 𝓤₀ ̇ 
+data WeakNormal  {Γ} : Γ ⊢ A → 𝓤₀ ̇
 
 data WeakNeutral {Γ A} where
   `_ : (x : Γ ∋ A)
@@ -65,8 +67,8 @@ wnf-soundness (M -→⟨ M-→N ⟩ N⇓) with wnf-soundness N⇓
 ------------------------------------------------------------------------------
 -- Variable renaming respects the weak normalistion property
 
-wnf-Subst : Subst Γ Δ → Set
-wnf-Subst  σ = {A : Type} → (x : _ ∋ A) → WeakNormal (σ x)
+wnf-Subst : Subst Γ Δ → 𝓤₀ ̇
+wnf-Subst  σ = {A : Typ} → (x : _ ∋ A) → WeakNormal (σ x)
 
 wne-rename : (ρ : Rename Γ Δ)
   → WeakNeutral x M
@@ -95,8 +97,8 @@ private
   variable
     σ : Subst Γ Δ
 
-nf-Subst : Subst Γ Δ → Set
-nf-Subst σ = {A : Type} → (x : _ ∋ A) → (σ x) isNormal
+nf-Subst : Subst Γ Δ → 𝓤₀ ̇
+nf-Subst σ = {A : Typ} → (x : _ ∋ A) → (σ x) isNormal
 
 wnf-subst
   : wnf-Subst σ
@@ -136,7 +138,7 @@ wnf-app (L -→⟨ L→M ⟩ M⇓) N⇓ = L · _ -→⟨ ξ-·ₗ L→M ⟩ wnf-
 
 weak-normalising : (M : Γ ⊢ A) → WeakNormal M
 weak-normalising (` x)   = ᵒ ` x
-weak-normalising (abort _ M) = {!!}
+weak-normalising (abort _ M) = {!abort _ ?!}
 weak-normalising (M · N) = wnf-app (weak-normalising M) (weak-normalising N)
 weak-normalising (ƛ M)   = ƛ weak-normalising M
 

@@ -1,15 +1,13 @@
 module Language.STLC.Substitution where
 
-open import Function hiding (_∋_)
-open import Relation.Binary.PropositionalEquality as Eq
-  using (_≡_; refl; sym; cong; cong₂; cong-app)
+open import Prelude
 
 open import Language.STLC.Term hiding (_∎)
 
 private
   variable
     Γ Δ Σ Ξ : Context
-    A B C   : Type
+    A B C   : Typ
     M N     : Γ ⊢ A
     
 infixr 5 _⨟_

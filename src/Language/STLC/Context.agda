@@ -2,28 +2,29 @@ module Language.STLC.Context where
 
 open import Data.Nat
 open import Data.Empty
+open import Prelude
 
 infix  2 _∋_
 infixl 4 _,_
 infixr 5 _→̇_
 infixl 5 _⧺_
 
-data Type    : Set
-data Context : Set
-data _∋_     : Context → Type → Set
+data Typ     : 𝓤₀ ̇
+data Context : 𝓤₀ ̇
+data _∋_     : Context → Typ → 𝓤₀ ̇
 
 private
   variable
     Γ Δ Ξ : Context
-    A B C : Type
+    A B C : Typ
     
-data Type where
-  ⊥̇   : Type
-  _→̇_ : Type → Type → Type
+data Typ where
+  ⊥̇   : Typ
+  _→̇_ : Typ → Typ → Typ
 
 data Context where
   ∅   :                  Context
-  _,_ : Context → Type → Context
+  _,_ : Context → Typ → Context
 
 data _∋_ where
   Z : Γ , A ∋ A
@@ -36,7 +37,7 @@ length : Context → ℕ
 length ∅       = 0
 length (Γ , x) = suc (length Γ)
 
-lookup : ∀ {n} → (p : n < length Γ) → Type
+lookup : ∀ {n} → (p : n < length Γ) → Typ
 lookup {_ , A} {zero}  _       = A
 lookup {_ , _} {suc n} (s≤s p) = lookup p
 
@@ -51,7 +52,7 @@ ext
 ext ρ Z      =  Z
 ext ρ (S x)  =  S (ρ x)
 
-Rename : Context → Context → Set
+Rename : Context → Context → 𝓤₀ ̇
 Rename Γ Δ = ∀ {A} → Γ ∋ A → Δ ∋ A
 
 _⧺_ : Context → Context → Context

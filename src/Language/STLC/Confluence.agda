@@ -3,13 +3,16 @@ module Language.STLC.Confluence where
 open import Data.Product as Prod
   renaming (_,_ to ⟨_,_⟩)
 
+open import Prelude
+
 open import Language.STLC.Term
 open import Language.STLC.Substitution
+
 
 private
   variable
     Γ Δ            : Context
-    A B C          : Type
+    A B C          : Typ
     M N L M′ N′ L′ : Γ ⊢ A
     
 ------------------------------------------------------------------------------
@@ -17,7 +20,7 @@ private
 -- M. Takahashi, “Parallel Reductions in λ-Calculus,” Inf. Comput., vol. 118, no. 1, pp. 120–127, 1995.
 
 infix 3 _⇛_
-data _⇛_  {Γ} : (M N : Γ ⊢ A) → Set where
+data _⇛_  {Γ} : (M N : Γ ⊢ A) → 𝓤₀ ̇ where
   pvar : {x : Γ ∋ A}
        → `  x ⇛ ` x
        
@@ -47,7 +50,7 @@ data _⇛_  {Γ} : (M N : Γ ⊢ A) → Set where
 infix  2 _⇛*_
 infixr 2 _⇛⟨_⟩_
 
-data _⇛*_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
+data _⇛*_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → 𝓤₀ ̇ where
   _∎ : (M : Γ ⊢ A)
        --------
      → M ⇛* M
@@ -117,7 +120,7 @@ par-rename {Γ} {Δ} {ρ = ρ} (pbeta {M′ = M′} {N′ = N′} M⇛M′ N⇛N
   with pbeta (par-rename {ρ = ext ρ} M⇛M′) (par-rename {ρ = ρ} N⇛N′) 
 ... | G rewrite rename-ssubst {Γ} {Δ} ρ M′ N′ = G
 
-Par-Subst : ∀{Γ Δ} → Subst Γ Δ → Subst Γ Δ → Set
+Par-Subst : ∀{Γ Δ} → Subst Γ Δ → Subst Γ Δ → 𝓤₀ ̇
 Par-Subst {Γ} {Δ} σ σ′ = ∀{A} {x : Γ ∋ A} → σ x ⇛ σ′ x
 
 par-subst-exts
@@ -157,18 +160,18 @@ sub-par {A} {Γ} {B} {M} {M′} {N} {N′} M⇛M′ N⇛N′ =
 ------------------------------------------------------------------------------
 -- Confluence
 
-_⁺ : ∀ {Γ A}
+_⃰ : ∀ {Γ A}
   → Γ ⊢ A → Γ ⊢ A
-(` x) ⁺       =  ` x
-(abort A M) ⁺  = abort A (M ⁺)
-(ƛ M) ⁺       = ƛ (M ⁺)
-((ƛ M) · N) ⁺ = M ⁺ [ N ⁺ ]
-(M · N) ⁺     = M ⁺ · (N ⁺)
+(` x) ⃰       = ` x
+(ƛ M) ⃰       = ƛ M ⃰
+abort _ M ⃰   = abort _ (M ⃰)
+((ƛ M) · N) ⃰ = M ⃰ [ N ⃰ ]
+(M · N) ⃰     = M ⃰ · N ⃰
 
 par-triangle : ∀ {Γ A} {M N : Γ ⊢ A}
   → M ⇛ N
     -------
-  → N ⇛ M ⁺
+  → N ⇛ M ⃰
 par-triangle pvar = pvar
 par-triangle (pabort M⇛M′)     = pabort (par-triangle M⇛M′)
 par-triangle (pbeta M⇛M′ N⇛N′) = sub-par (par-triangle M⇛M′) (par-triangle N⇛N′) 

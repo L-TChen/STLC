@@ -1,9 +1,8 @@
 module Language.STLC.NormalisationByEval where
 
-open import Function
-  using (_∘_)
-open import Data.Empty
 open import Data.Product
+
+open import Prelude
 
 open import Language.STLC.Term
 open import Language.STLC.Normal
@@ -11,11 +10,11 @@ open import Language.STLC.Normal
 private
   variable
     Γ Δ Ξ : Context
-    A B C : Type
+    A B C : Typ
     M N L : Γ ⊢ A
 
 infix 3 _⊆_
-data _⊆_ : (Γ Δ : Context) → Set where
+data _⊆_ : (Γ Δ : Context) → 𝓤₀ ̇ where
   refl : Γ ⊆ Γ
   
   keep : Γ     ⊆ Δ
@@ -54,11 +53,11 @@ weaken-nf : Γ ⊆ Δ
   → Γ ⊢nf A → Δ ⊢nf A
 weaken-nf = rename-nf ∘ embedding
 
-Tyᴺ : Type → Context → Set
+Tyᴺ : Typ → Context → 𝓤₀ ̇
 Tyᴺ ⊥̇       Γ = Γ ⊢nf ⊥̇ 
 Tyᴺ (A →̇ B) Γ = ∀ {Δ} → Γ ⊆ Δ → Tyᴺ A Δ → Tyᴺ B Δ
 
-data Conᴺ : Context → Context → Set where
+data Conᴺ : Context → Context → 𝓤₀ ̇ where
   ∅   : Conᴺ ∅ Δ
   _,_ : Conᴺ Γ Δ → Tyᴺ A Δ → Conᴺ (Γ , A) Δ
 

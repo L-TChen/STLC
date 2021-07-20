@@ -8,6 +8,25 @@ open import Agda.Primitive public
           ; Setω to 𝓤ω
           ; Set to Type
           )
+open import Function                   public
+  using (_∘_)
+
+open import Data.Unit                  public
+  using (⊤)
+open import Data.Empty                 public
+  using (⊥; ⊥-elim)
+open import Data.Nat                   public
+  using (ℕ; suc; zero; _≤?_)
+
+open import Relation.Nullary           public
+  using (¬_)
+open import Relation.Nullary.Decidable public
+
+import Relation.Binary.PropositionalEquality
+module Eq = Relation.Binary.PropositionalEquality
+open Eq public
+  using (_≡_; refl; sym; cong; cong₂; cong-app)
+
 
 variable
   𝓤 𝓥 𝓦 𝓣 𝓤' 𝓥' 𝓦' 𝓣' : Universe

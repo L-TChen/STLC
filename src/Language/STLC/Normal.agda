@@ -1,21 +1,20 @@
 module Language.STLC.Normal where
 
-open import Data.Empty
-open import Relation.Nullary
+open import Prelude
 
 open import Language.STLC.Term
 
 private
   variable
     Γ : Context
-    A B : Type
+    A B : Typ
     M N L M′ N′ L′ : Γ ⊢ A
 
 infix  3 _⊢ne_ _⊢nf_
 infixr 9 ᵒ_ 
 
-data _isNeutral {Γ : Context} : Γ ⊢ A → Set 
-data _isNormal  {Γ : Context} : Γ ⊢ A → Set 
+data _isNeutral {Γ : Context} : Γ ⊢ A → 𝓤₀ ̇ 
+data _isNormal  {Γ : Context} : Γ ⊢ A → 𝓤₀ ̇ 
 
 data _isNeutral {Γ} where
   `_  : (x : Γ ∋ A)
@@ -60,8 +59,8 @@ completeness (abort _ M) aM↛ = ᵒ abort (completeness M M↛)
   where M↛ : ∀ N → ¬ (M -→ N)
         M↛ N M-→N = aM↛ (abort _ N) (ξ-abort M-→N)
 
-data _⊢ne_ (Γ : Context) : Type → Set 
-data _⊢nf_ (Γ : Context) : Type → Set 
+data _⊢ne_ (Γ : Context) : Typ → 𝓤₀ ̇ 
+data _⊢nf_ (Γ : Context) : Typ → 𝓤₀ ̇ 
 
 data _⊢ne_ Γ where
   `_
@@ -72,7 +71,7 @@ data _⊢ne_ Γ where
     → Γ ⊢nf A
     → Γ ⊢ne B
   abort
-    : (A : Type)
+    : (A : Typ)
     → Γ ⊢nf ⊥̇
     → Γ ⊢ne A
 data _⊢nf_ Γ where
