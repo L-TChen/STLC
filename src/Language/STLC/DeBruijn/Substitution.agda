@@ -1,14 +1,14 @@
-module Language.STLC.Substitution where
+module Language.STLC.DeBruijn.Substitution where
 
 open import Prelude
 
-open import Language.STLC.Term hiding (_∎)
+open import Language.STLC.DeBruijn.Term hiding (_∎)
 
 private
   variable
-    Γ Δ Ξ : Context
-    A B C   : Typ
-    M N     : Γ ⊢ A
+    Γ Δ Ξ : Cxt
+    A B C : Ty
+    M N   : Γ ⊢ A
     
 infixr 5 _⨟_
 
@@ -95,7 +95,7 @@ rename-comp ρ₁ ρ₂ {M = ƛ M}      = cong ƛ_ (begin
 ----------------------------------------------------------------------
 -- punchIn: Weakening at any position
 
-punchIn : ∀ A {Γ₁} Γ₂ → Rename (Γ₁ ⧺ Γ₂) ((Γ₁ , A) ⧺ Γ₂)
+punchIn : ∀ A {Γ₁} Γ₂ → Rename {ℬ = ⊤} (Γ₁ ⧺ Γ₂) ((Γ₁ , A) ⧺ Γ₂)
 punchIn _ ∅       Z     = S Z
 punchIn _ ∅       (S x) = S (S x)
 punchIn _ (Δ , C) Z     = Z

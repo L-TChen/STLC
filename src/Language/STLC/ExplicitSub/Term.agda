@@ -4,19 +4,19 @@ module Language.STLC.ExplicitSub.Term where
 
 open import Language.STLC.Context
 
-
 infix 3 _⊢ᵗ_ _⊢ˢ_
 infixr 5 ƛ_
 infixl 6 _·_
 infixr 8 ⟪_⟫_
 
-data _⊢ˢ_ : (Γ Δ : Context) → 𝓤₀ ̇
-data _⊢ᵗ_ : (Γ : Context) → (τ : Typ) → 𝓤₀ ̇
+data _⊢ˢ_ {ℬ : 𝓤₀ ̇} : (Γ Δ : Context ℬ) → 𝓤₀ ̇
+data _⊢ᵗ_ {ℬ : 𝓤₀ ̇} : (Γ : Context ℬ) → (τ : Typ ℬ) → 𝓤₀ ̇
 
 private
   variable
-    Γ Δ Ξ Θ : Context
-    τ σ     : Typ
+    ℬ       : 𝓤₀ ̇
+    Γ Δ Ξ Θ : Context ℬ
+    τ σ     : Typ ℬ
     δ γ ξ   : Γ ⊢ˢ Δ
     t u s   : Γ ⊢ᵗ τ
 
@@ -28,8 +28,8 @@ private
 exts : Γ ⊢ˢ Δ
   → Γ , τ ⊢ˢ Δ , τ 
 
-data _⊢ˢ_ where
-  id : (Γ : Context)
+data _⊢ˢ_ {ℬ} where
+  id : (Γ : Context ℬ)
     → Γ ⊢ˢ Γ
 
   p  : Γ , τ ⊢ˢ Γ

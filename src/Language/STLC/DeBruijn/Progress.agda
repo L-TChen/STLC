@@ -1,14 +1,14 @@
-module Language.STLC.Progress where
+module Language.STLC.DeBruijn.Progress where
 
 open import Prelude
 
-open import Language.STLC.Term
-open import Language.STLC.Normal
+open import Language.STLC.DeBruijn.Term
+open import Language.STLC.DeBruijn.Normal
 
 private
   variable
-    Γ : Context
-    A : Typ
+    Γ : Cxt
+    A : Ty
     M N : Γ ⊢ A
 
 data Progress (M : Γ ⊢ A) : 𝓤₀ ̇ where

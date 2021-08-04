@@ -1,20 +1,20 @@
-module Language.STLC.Normal where
+module Language.STLC.DeBruijn.Normal where
 
 open import Prelude
 
-open import Language.STLC.Term
+open import Language.STLC.DeBruijn.Term
 
 private
   variable
-    Γ : Context
-    A B : Typ
+    Γ : Cxt
+    A B : Ty
     M N L M′ N′ L′ : Γ ⊢ A
 
 infix  3 _⊢ne_ _⊢nf_
 infixr 9 ᵒ_ 
 
-data _isNeutral {Γ : Context} : Γ ⊢ A → 𝓤₀ ̇ 
-data _isNormal  {Γ : Context} : Γ ⊢ A → 𝓤₀ ̇ 
+data _isNeutral {Γ} : Γ ⊢ A → 𝓤₀ ̇ 
+data _isNormal  {Γ} : Γ ⊢ A → 𝓤₀ ̇ 
 
 data _isNeutral {Γ} where
   `_  : (x : Γ ∋ A)
@@ -59,8 +59,8 @@ completeness (abort _ M) aM↛ = ᵒ abort (completeness M M↛)
   where M↛ : ∀ N → ¬ (M -→ N)
         M↛ N M-→N = aM↛ (abort _ N) (ξ-abort M-→N)
 
-data _⊢ne_ (Γ : Context) : Typ → 𝓤₀ ̇ 
-data _⊢nf_ (Γ : Context) : Typ → 𝓤₀ ̇ 
+data _⊢ne_ Γ : Ty → 𝓤₀ ̇ 
+data _⊢nf_ Γ : Ty → 𝓤₀ ̇ 
 
 data _⊢ne_ Γ where
   `_
@@ -71,7 +71,7 @@ data _⊢ne_ Γ where
     → Γ ⊢nf A
     → Γ ⊢ne B
   abort
-    : (A : Typ)
+    : (A : Ty)
     → Γ ⊢nf ⊥̇
     → Γ ⊢ne A
 data _⊢nf_ Γ where

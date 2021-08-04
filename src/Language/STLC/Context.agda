@@ -9,22 +9,23 @@ infixl 4 _,_
 infixr 5 _→̇_
 infixl 5 _⧺_
 
-data Typ     : 𝓤₀ ̇
-data Context : 𝓤₀ ̇
-data _∋_     : Context → Typ → 𝓤₀ ̇
+data Typ     (ℬ : 𝓤₀ ̇) : 𝓤₀ ̇
+data Context (ℬ : 𝓤₀ ̇) : 𝓤₀ ̇
+data _∋_     {ℬ : 𝓤₀ ̇} : Context ℬ → Typ ℬ → 𝓤₀ ̇
 
 private
   variable
-    Γ Δ Ξ : Context
-    A B C : Typ
+    ℬ     : 𝓤₀ ̇
+    Γ Δ Ξ : Context ℬ
+    A B C : Typ ℬ
     
-data Typ where
-  ⊥̇   : Typ
-  _→̇_ : Typ → Typ → Typ
+data Typ ℬ where
+  ι   :             ℬ → Typ ℬ
+  _→̇_ : Typ ℬ → Typ ℬ → Typ ℬ
 
-data Context where
-  ∅   :                  Context
-  _,_ : Context → Typ → Context
+data Context ℬ where
+  ∅   :                     Context ℬ
+  _,_ : Context ℬ → Typ ℬ → Context ℬ
 
 data _∋_ where
   Z : Γ , A ∋ A
@@ -33,28 +34,29 @@ data _∋_ where
        ---------
      → Γ , B ∋ A
 
-length : Context → ℕ
+length : Context ℬ → ℕ
 length ∅       = 0
 length (Γ , x) = suc (length Γ)
 
-lookup : ∀ {n} → (p : n < length Γ) → Typ
-lookup {_ , A} {zero}  _       = A
-lookup {_ , _} {suc n} (s≤s p) = lookup p
+lookup : {Γ : Context ℬ} {n : ℕ} → (p : n < length Γ) → Typ ℬ
+lookup {Γ = _ , A} {n = zero}  _       = A
+lookup {Γ = _ , _} {n = suc n} (s≤s p) = lookup p
 
-count : ∀ {n} → (p : n < length Γ) → Γ ∋ lookup p
-count {Γ , A} {zero}  (s≤s p) = Z
-count {Γ , A} {suc n} (s≤s p) = S count p
+count : {Γ : Context ℬ} {n : ℕ} → (p : n < length Γ) → Γ ∋ lookup p
+count {Γ = Γ , A} {zero}  (s≤s p) = Z
+count {Γ = Γ , A} {suc n} (s≤s p) = S count p
 
 ext
-  : (∀ {A}   →     Γ ∋ A →     Δ ∋ A)
+  : {Γ Δ : Context ℬ}
+  → (∀ {A}   →     Γ ∋ A →     Δ ∋ A)
     ---------------------------------
   → (∀ {A B} → Γ , B ∋ A → Δ , B ∋ A)
 ext ρ Z      =  Z
 ext ρ (S x)  =  S (ρ x)
 
-Rename : Context → Context → 𝓤₀ ̇
+Rename : Context ℬ → Context ℬ → 𝓤₀ ̇
 Rename Γ Δ = ∀ {A} → Γ ∋ A → Δ ∋ A
 
-_⧺_ : Context → Context → Context
+_⧺_ : Context ℬ → Context ℬ → Context ℬ 
 Γ ⧺ ∅       = Γ
 Γ ⧺ (Δ , x) = Γ ⧺ Δ , x

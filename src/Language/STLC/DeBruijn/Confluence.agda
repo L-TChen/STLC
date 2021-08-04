@@ -1,4 +1,4 @@
-module Language.STLC.Confluence where
+module Language.STLC.DeBruijn.Confluence where
 
 --open import Data.Product as Prod
 --  renaming (_,_ to ⟨_,_⟩)
@@ -6,14 +6,14 @@ module Language.STLC.Confluence where
 open import Prelude
   renaming (_,_ to ⟨_,_⟩)
 
-open import Language.STLC.Term
-open import Language.STLC.Substitution
+open import Language.STLC.DeBruijn.Term
+open import Language.STLC.DeBruijn.Substitution
 
 
 private
   variable
-    Γ Δ            : Context
-    A B C          : Typ
+    Γ Δ            : Cxt
+    A B C          : Ty
     M N L M′ N′ L′ : Γ ⊢ A
     
 ------------------------------------------------------------------------------
