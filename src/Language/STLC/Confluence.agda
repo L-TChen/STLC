@@ -1,9 +1,10 @@
 module Language.STLC.Confluence where
 
-open import Data.Product as Prod
-  renaming (_,_ to ⟨_,_⟩)
+--open import Data.Product as Prod
+--  renaming (_,_ to ⟨_,_⟩)
 
 open import Prelude
+  renaming (_,_ to ⟨_,_⟩)
 
 open import Language.STLC.Term
 open import Language.STLC.Substitution
@@ -116,9 +117,9 @@ par-rename pvar              = pvar
 par-rename (pabort M⇛M′)     = pabort (par-rename M⇛M′)
 par-rename (pabs M⇛M′)       = pabs (par-rename M⇛M′)
 par-rename (papp M⇛M′ N⇛N′)  = papp (par-rename M⇛M′) (par-rename N⇛N′)
-par-rename {Γ} {Δ} {ρ = ρ} (pbeta {M′ = M′} {N′ = N′} M⇛M′ N⇛N′)
-  with pbeta (par-rename {ρ = ext ρ} M⇛M′) (par-rename {ρ = ρ} N⇛N′) 
-... | G rewrite rename-ssubst {Γ} {Δ} ρ M′ N′ = G
+par-rename {Γ} {Δ} {ρ = ρ} (pbeta {M′ = M′} {N′ = N′} M⇛M′ N⇛N′) =
+ subst (λ L → rename ρ ((ƛ _) · _) ⇛ L) (rename-ssubst ρ M′ N′) G
+  where G = pbeta (par-rename {ρ = ext ρ} M⇛M′) (par-rename {ρ = ρ} N⇛N′) 
 
 Par-Subst : ∀{Γ Δ} → Subst Γ Δ → Subst Γ Δ → 𝓤₀ ̇
 Par-Subst {Γ} {Δ} σ σ′ = ∀{A} {x : Γ ∋ A} → σ x ⇛ σ′ x
@@ -141,11 +142,9 @@ par-subst σ⇛τ (papp M⇛M′ N⇛N′) =
   papp (par-subst σ⇛τ M⇛M′) (par-subst σ⇛τ N⇛N′)
 par-subst σ⇛τ (pabs M⇛M′) =
   pabs (par-subst (λ {A} {x} → par-subst-exts σ⇛τ {x = x}) M⇛M′)
-par-subst {σ = σ} {τ} σ⇛τ (pbeta {M′ = M′} {N′ = N′} M⇛M′ N⇛N′)
-    with pbeta (par-subst {M = _} {σ = exts σ} {τ = exts τ}
-                        (λ{A}{x} → par-subst-exts σ⇛τ {x = x}) M⇛M′)
-               (par-subst {σ = σ} σ⇛τ N⇛N′)
-... | G rewrite subst-ssubst τ M′ N′ = G
+par-subst {σ = σ} {τ} σ⇛τ (pbeta {M′ = M′} {N′ = N′} M⇛M′ N⇛N′) = subst
+  (λ L → ((ƛ _) · _) ⇛ L) (subst-ssubst τ M′ N′) G
+  where G = pbeta (par-subst (λ {A} {x} → par-subst-exts σ⇛τ {x = x}) M⇛M′) (par-subst σ⇛τ N⇛N′)
 
 sub-par
   : M ⇛ M′
@@ -186,7 +185,7 @@ strip
   : M ⇛ N
   → M ⇛* N′
     ------------------------------------
-  → Σ[ L ∈ Γ ⊢ A ] (N ⇛* L)  ×  (N′ ⇛ L)
+  → Σ[ L ∈ Γ ⊢ A ] (N ⇛* L)  × (N′ ⇛ L)
 strip mn (M ∎) = ⟨ _ , ⟨ _ ∎ , mn ⟩ ⟩
 strip mn (M ⇛⟨ mm' ⟩ m'n')
   with strip (par-triangle mm') m'n'

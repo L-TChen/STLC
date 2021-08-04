@@ -3,6 +3,7 @@ include:
   src
 depend: 
   standard-library
+  cubical
 
 flags:
-  --without-K --auto-inline --no-import-sorts
+  --auto-inline --no-import-sorts --without-K --cubical

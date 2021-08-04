@@ -8,25 +8,29 @@ open import Agda.Primitive public
           ; Setω to 𝓤ω
           ; Set to Type
           )
-open import Function                   public
+open import Cubical.Foundations.Function     public
   using (_∘_)
 
-open import Data.Unit                  public
-  using (⊤)
-open import Data.Empty                 public
-  using (⊥; ⊥-elim)
-open import Data.Nat                   public
-  using (ℕ; suc; zero; _≤?_)
+import Cubical.Foundations.Prelude as CubicalPrelude 
+open CubicalPrelude                          public
+  using (_≡_; _[_≡_]; refl; sym; cong; cong₂; subst; funExt; ~_; PathP)
+  renaming (funExt⁻ to cong-app; subst2 to subst₂)
 
-open import Relation.Nullary           public
-  using (¬_)
-open import Relation.Nullary.Decidable public
+open import Cubical.Data.Unit                public
+  renaming (Unit to ⊤)
+open import Cubical.Data.Empty               public
+  using (⊥)
+  renaming (elim to ⊥-elim)
+open import Cubical.Data.Nat                 public
+  using (ℕ; suc; zero)
+open import Cubical.Data.Nat.Order.Recursive public
+  using (_≤?_)
+open import Cubical.Data.Sigma               public
+  using (Σ; Σ-syntax; ∃-syntax; _×_; _,_)
+  renaming (fst to proj₁; snd to proj₂)
 
-import Relation.Binary.PropositionalEquality
-module Eq = Relation.Binary.PropositionalEquality
-open Eq public
-  using (_≡_; refl; sym; cong; cong₂; cong-app)
-
+open import Cubical.Relation.Nullary         public
+  using (¬_; Dec)
 
 variable
   𝓤 𝓥 𝓦 𝓣 𝓤' 𝓥' 𝓦' 𝓣' : Universe
@@ -44,3 +48,18 @@ _⁺⁺ : Universe → Universe
 
 universe-of : {𝓤 : Universe} → (X : 𝓤 ̇) → Universe
 universe-of {𝓤} X = 𝓤
+
+module Eq where
+  module ≡-Reasoning where
+    open CubicalPrelude public
+      using (_≡⟨_⟩_; _∎) 
+
+    infix 1 begin_
+    begin_ : {A : 𝓤 ̇} {x y : A}
+      → x ≡ y → x ≡ y
+    begin_ r = r
+
+PathP-syntax = PathP
+
+infix 4 PathP-syntax
+syntax PathP-syntax (λ i → A) x y = x ≡ y ⦂ [ i ↦ A ]

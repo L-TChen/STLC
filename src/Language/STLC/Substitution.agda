@@ -6,7 +6,7 @@ open import Language.STLC.Term hiding (_∎)
 
 private
   variable
-    Γ Δ Σ Ξ : Context
+    Γ Δ Ξ : Context
     A B C   : Typ
     M N     : Γ ⊢ A
     
@@ -135,7 +135,7 @@ punchesIn-punchIn-comm {Ξ = Ξ , C} σ (S x) = begin
   rename S_ (rename (punchIn _ Ξ) (punchesIn Ξ σ x))
     ≡⟨ rename-comp (punchIn _ Ξ) S_ ⟩
   rename (S_ ∘ (punchIn _ Ξ)) (punchesIn Ξ σ x)
-    ≡⟨⟩
+    ≡⟨ refl ⟩
   rename ((punchIn _ (Ξ , C)) ∘ S_) (punchesIn Ξ σ x)
     ≡⟨ sym (rename-comp S_ (punchIn _ (Ξ , C))) ⟩
   rename (punchIn _ (Ξ , C)) (rename S_ (punchesIn Ξ σ x))
@@ -231,11 +231,11 @@ subst-assoc σ₁ σ₂ (ƛ M)       = cong  ƛ_ (begin
     exts-subst σ₁ σ₂ Z     = refl
     exts-subst σ₁ σ₂ (S x) = begin
       (exts σ₁ ⨟ exts σ₂) (S x)
-        ≡⟨⟩
+        ≡⟨ refl ⟩
       rename S_ (σ₁ x) ⟪ exts σ₂ ⟫ 
         ≡⟨ rename-exts σ₂ (σ₁ x)  ⟩
       rename S_ (σ₁ x ⟪ σ₂ ⟫)
-        ≡⟨⟩
+        ≡⟨ refl ⟩
       exts (σ₁ ⨟ σ₂) (S x)
         ∎
 
@@ -251,7 +251,7 @@ rename-subst ρ σ M = begin
   (M ⟪ ren ρ ⟫) ⟪ σ ⟫ 
     ≡⟨ subst-assoc (ren ρ) σ M ⟩
   M ⟪ ren ρ ⨟ σ ⟫
-    ≡⟨⟩
+    ≡⟨ refl ⟩
   M ⟪ σ ∘ ρ ⟫
     ∎
   where open Eq.≡-Reasoning
@@ -315,8 +315,8 @@ rename-ssubst ρ M N = begin
 rename-reduce : {ρ : Rename Γ Δ}
   → M -→ N
   → rename ρ M -→ rename ρ N
-rename-reduce {ρ = ρ} (β-ƛ· {M = M} {N})
-  rewrite Eq.sym (rename-ssubst ρ M N) = β-ƛ· 
+rename-reduce {ρ = ρ} (β-ƛ· {M = M} {N}) = subst
+  (λ L → rename ρ (ƛ M) · rename ρ N  -→ L) (rename-ssubst ρ M N) β-ƛ·
 rename-reduce (ξ-ƛ M→N)  = ξ-ƛ  (rename-reduce M→N)
 rename-reduce (ξ-·ₗ M→N) = ξ-·ₗ (rename-reduce M→N)
 rename-reduce (ξ-·ᵣ M→N) = ξ-·ᵣ (rename-reduce M→N)
@@ -325,8 +325,8 @@ rename-reduce (ξ-abort M→N) = ξ-abort (rename-reduce M→N)
 subst-reduce : {σ : Subst Γ Δ}
   → M -→ N
   → M ⟪ σ ⟫ -→ N ⟪ σ ⟫
-subst-reduce {σ = σ} (β-ƛ· {M = M} {N})
-  rewrite Eq.sym (subst-ssubst σ M N) = β-ƛ·
+subst-reduce {σ = σ} (β-ƛ· {M = M} {N}) = subst
+  (λ L → (ƛ M) ⟪ σ ⟫ · N ⟪ σ ⟫ -→ L) (subst-ssubst σ M N) β-ƛ·
 subst-reduce (ξ-ƛ M→N)     = ξ-ƛ  (subst-reduce M→N)
 subst-reduce (ξ-·ₗ M→N)    = ξ-·ₗ (subst-reduce M→N)
 subst-reduce (ξ-·ᵣ M→N)    = ξ-·ᵣ (subst-reduce M→N)

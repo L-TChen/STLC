@@ -9,7 +9,7 @@ infix  3 _⊢_
 infixr 5 ƛ_
 infixl 7 _·_
 infixl 8 _[_] _⟪_⟫
-infixr 9 `_ #_
+infixr 9 `_ -- #_
 
 data _⊢_ (Γ : Context) : Typ → 𝓤₀ ̇
 
@@ -37,11 +37,13 @@ data _⊢_ Γ where
     : ∀ A
     → Γ ⊢ ⊥̇
     → Γ ⊢ A
-  
+{- 
+
 #_ : (n : ℕ) {n∈Γ : True (suc n ≤? length Γ)}
   → Γ ⊢ lookup (toWitness n∈Γ)
 #_ _ {n∈Γ} = ` count (toWitness n∈Γ)
 
+-}
 rename : Rename Γ Δ
   → (Γ ⊢ A)
   → (Δ ⊢ A)
