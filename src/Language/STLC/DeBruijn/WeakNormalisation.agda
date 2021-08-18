@@ -1,19 +1,16 @@
-module Language.STLC.WeakNormalisation where
-
-open import Data.Product as Prod
-  renaming (_,_ to ⟨_,_⟩)
-open import Data.Sum
+module Language.STLC.DeBruijn.WeakNormalisation where
 
 open import Prelude 
+  renaming (_,_ to ⟨_,_⟩)
 
-open import Language.STLC.Term
-open import Language.STLC.Normal
-open import Language.STLC.Substitution
+open import Language.STLC.DeBruijn.Term
+open import Language.STLC.DeBruijn.Normal
+open import Language.STLC.DeBruijn.Substitution
 
 private
   variable
-    A B : Typ
-    Γ Δ : Context
+    A B : Ty
+    Γ Δ : Cxt
     M N L : Γ ⊢ A
     x : Γ ∋ A
 ----------------------------------------------------------------------
@@ -50,9 +47,9 @@ data WeakNormal {Γ} where
 -- Lemma. Every weakly normalising term is reducible to term in normal form.
 
 wne-soundness : WeakNeutral x M
-  → ∃[ M′ ] (M′ isNeutral × (M -↠ M′))
+  → Σ[ M′ ∈ _ ] ((M′ isNeutral) × (M -↠ M′))
 wnf-soundness : WeakNormal M
-  → ∃[ M′ ] (M′ isNormal  × (M -↠ M′))
+  → Σ[ M′ ∈ _ ] (M′ isNormal  × (M -↠ M′))
 wne-soundness (` x)     = ⟨ ` x , ⟨ ` x , ` x ∎ ⟩ ⟩
 wne-soundness (M⇓ · N⇓) with wne-soundness M⇓ | wnf-soundness N⇓
 ... | ⟨ M′ , ⟨ M′↓ , r₁ ⟩ ⟩ | ⟨ N′ , ⟨ N′↓ , r₂ ⟩ ⟩
@@ -68,7 +65,7 @@ wnf-soundness (M -→⟨ M-→N ⟩ N⇓) with wnf-soundness N⇓
 -- Variable renaming respects the weak normalistion property
 
 wnf-Subst : Subst Γ Δ → 𝓤₀ ̇
-wnf-Subst  σ = {A : Typ} → (x : _ ∋ A) → WeakNormal (σ x)
+wnf-Subst  σ = {A : Ty} → (x : _ ∋ A) → WeakNormal (σ x)
 
 wne-rename : (ρ : Rename Γ Δ)
   → WeakNeutral x M
@@ -98,7 +95,7 @@ private
     σ : Subst Γ Δ
 
 nf-Subst : Subst Γ Δ → 𝓤₀ ̇
-nf-Subst σ = {A : Typ} → (x : _ ∋ A) → (σ x) isNormal
+nf-Subst σ = {A : Ty} → (x : _ ∋ A) → (σ x) isNormal
 
 wnf-subst
   : wnf-Subst σ
@@ -145,5 +142,5 @@ weak-normalising (ƛ M)   = ƛ weak-normalising M
 ------------------------------------------------------------------------------
 -- Corollary. Every well-typed term does reduce to a normal form.
 
-normalise : (M : Γ ⊢ A) → ∃[ N ] (N isNormal × (M -↠ N))
+normalise : (M : Γ ⊢ A) → Σ[ N ∈ _ ] (N isNormal × (M -↠ N))
 normalise M = wnf-soundness (weak-normalising M)
